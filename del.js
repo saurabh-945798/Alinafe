@@ -985,79 +985,107 @@
 // updateVehicles();
 
 
-// migrateUploads.js
-import dotenv from "dotenv";
-import { v2 as cloudinary } from "cloudinary";
-import fs from "fs";
-import path from "path";
+// // migrateUploads.js
+// import dotenv from "dotenv";
+// import { v2 as cloudinary } from "cloudinary";
+// import fs from "fs";
+// import path from "path";
+// import mongoose from "mongoose";
+// import Ad from "./models/Ad.js";
+// import connectDB from "./config/db.js";
+
+// dotenv.config();
+// await connectDB();
+
+// // Configure Cloudinary
+// cloudinary.config({
+//   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+//   api_key: process.env.CLOUDINARY_API_KEY,
+//   api_secret: process.env.CLOUDINARY_API_SECRET,
+// });
+
+// // Absolute uploads folder
+// const __dirname = path.resolve();
+// const uploadsDir = path.join(__dirname, "uploads");
+
+// console.log("🧭 Checking old uploads at:", uploadsDir);
+
+// const migrate = async () => {
+//   try {
+//     const ads = await Ad.find({
+//       images: { $exists: true, $ne: [] },
+//     });
+
+//     console.log(`📦 Found ${ads.length} ads with local image paths`);
+
+//     for (const ad of ads) {
+//       const newUrls = [];
+
+//       for (const imgPath of ad.images) {
+//         // Check only local paths (not already on Cloudinary)
+//         if (imgPath.startsWith("/uploads/")) {
+//           const filename = imgPath.split("/").pop();
+//           const localPath = path.join(uploadsDir, filename);
+
+//           if (fs.existsSync(localPath)) {
+//             try {
+//               const uploadRes = await cloudinary.uploader.upload(localPath, {
+//                 folder: "zitheke_uploads",
+//               });
+//               newUrls.push(uploadRes.secure_url);
+//               console.log("✅ Uploaded:", uploadRes.secure_url);
+//             } catch (err) {
+//               console.error("❌ Upload failed for:", filename, err.message);
+//             }
+//           } else {
+//             console.warn("⚠️ File not found:", filename);
+//           }
+//         } else {
+//           newUrls.push(imgPath); // keep Cloudinary links as-is
+//         }
+//       }
+
+//       if (newUrls.length > 0) {
+//         ad.images = newUrls;
+//         await ad.save();
+//         console.log(`🆙 Updated Ad: ${ad.title}`);
+//       }
+//     }
+
+//     console.log("🎉 Migration complete!");
+//     mongoose.connection.close();
+//   } catch (error) {
+//     console.error("❌ Migration failed:", error);
+//     mongoose.connection.close();
+//   }
+// };
+
+// migrate();
+
+
+
+
 import mongoose from "mongoose";
-import Ad from "./models/Ad.js";
-import connectDB from "./config/db.js";
 
-dotenv.config();
-await connectDB();
+const MONGO_URI = "mongodb+srv://Alinafe:Alinafe00112233@cluster0.xs39eob.mongodb.net/Zitheke?retryWrites=true&w=majority&appName=Cluster0";
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-// Absolute uploads folder
-const __dirname = path.resolve();
-const uploadsDir = path.join(__dirname, "uploads");
-
-console.log("🧭 Checking old uploads at:", uploadsDir);
-
-const migrate = async () => {
+const updateCurrency = async () => {
   try {
-    const ads = await Ad.find({
-      images: { $exists: true, $ne: [] },
-    });
+    await mongoose.connect(MONGO_URI);
+    console.log("Database connected...");
 
-    console.log(`📦 Found ${ads.length} ads with local image paths`);
+    const result = await mongoose.connection.collection("ads").updateMany(
+      { currency: "MK" },
+      { $set: { currency: "INR" } }
+    );
 
-    for (const ad of ads) {
-      const newUrls = [];
+    console.log(`Updated ${result.modifiedCount} ads.`);
+    process.exit(0);
 
-      for (const imgPath of ad.images) {
-        // Check only local paths (not already on Cloudinary)
-        if (imgPath.startsWith("/uploads/")) {
-          const filename = imgPath.split("/").pop();
-          const localPath = path.join(uploadsDir, filename);
-
-          if (fs.existsSync(localPath)) {
-            try {
-              const uploadRes = await cloudinary.uploader.upload(localPath, {
-                folder: "zitheke_uploads",
-              });
-              newUrls.push(uploadRes.secure_url);
-              console.log("✅ Uploaded:", uploadRes.secure_url);
-            } catch (err) {
-              console.error("❌ Upload failed for:", filename, err.message);
-            }
-          } else {
-            console.warn("⚠️ File not found:", filename);
-          }
-        } else {
-          newUrls.push(imgPath); // keep Cloudinary links as-is
-        }
-      }
-
-      if (newUrls.length > 0) {
-        ad.images = newUrls;
-        await ad.save();
-        console.log(`🆙 Updated Ad: ${ad.title}`);
-      }
-    }
-
-    console.log("🎉 Migration complete!");
-    mongoose.connection.close();
   } catch (error) {
-    console.error("❌ Migration failed:", error);
-    mongoose.connection.close();
+    console.error(error);
+    process.exit(1);
   }
 };
 
-migrate();
+updateCurrency();

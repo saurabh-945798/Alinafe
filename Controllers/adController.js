@@ -24,8 +24,103 @@ import User from "../models/User.js";
 /* ================================
    🟢 CREATE AD (Pending by default)
 ================================ */
+/* ===========================================================
+    🟢 ADVANCED CREATE AD CONTROLLER  
+    Category-Wise Dynamic Validation + Clean Architecture
+============================================================== */
+
+
+/* -----------------------------------------------------------
+   🧠 CATEGORY-WISE REQUIRED FIELDS MAP  
+   Add / Edit categories easily, super scalable
+------------------------------------------------------------ */
+const CATEGORY_FIELDS = {
+  "Real Estate": [
+    "bedrooms",
+    "bathrooms",
+    "area",
+    "facing",
+    "floor",
+    "totalFloors",
+    "propertyType",
+    "furnishing",
+    "constructionStatus",
+  ],
+  "Vehicles": [
+    "mileage",
+    "year",
+    "brand",
+    "fuelType",
+    "transmission",
+    "kmsDriven",
+    "ownerType",
+  ],
+  "Mobiles": [
+    "brand",
+    "model",
+    "condition",
+    "warranty",
+    "storage",
+    "ram",
+  ],
+  "Electronics": [
+    "brand",
+    "condition",
+    "warranty",
+  ],
+  "Fashion": [
+    "size",
+    "color",
+    "gender",
+    "ageGroup",
+  ],
+  "Jobs": [
+    "salary",
+    "jobType",
+    "experience",
+    "qualification",
+    "companyName",
+  ],
+  "Services": [
+    "serviceType",
+    "experience",
+  ],
+  "Pets": [
+    "age",
+    "breed",
+    "vaccinated",
+  ],
+  "Books": [
+    "author",
+    "edition",
+    "condition",
+  ],
+  "Furniture": [
+    "size",
+    "material",
+    "condition",
+  ],
+};
+
+
+/* -----------------------------------------------------------
+   🧪 Validate category wise fields
+------------------------------------------------------------ */
+const validateCategoryData = (category, body) => {
+  const required = CATEGORY_FIELDS[category] || [];
+
+  const missing = required.filter((field) => !body[field]);
+
+  return missing;
+};
+
+
+/* ===========================================================
+    🟢 CREATE AD (Pending by default)
+============================================================== */
 export const createAd = async (req, res) => {
   try {
+    const body = req.body;
     const {
       ownerUid,
       ownerName,
@@ -34,41 +129,29 @@ export const createAd = async (req, res) => {
       title,
       description,
       category,
-      subcategory,
       price,
-      negotiable,
-      condition,
-      city,
-      location,
-      deliveryAvailable,
-      bedrooms,
-      bathrooms,
-      area,
-      mileage,
-      year,
-      brand,
-      warranty,
-      size,
-      color,
-      salary,
-      quantity,
-      ageGroup,
-      fileType,
-      accessType,
-    } = req.body;
+    } = body;
 
-    // ✅ Required fields check
+    /* ----------------------------------------
+       ⚠️ BASIC VALIDATIONS
+    ------------------------------------------- */
     if (!ownerUid || !title || !description || !category) {
-      return res.status(400).json({ message: "Missing required fields" });
+      return res.status(400).json({
+        success: false,
+        message: "Required fields missing: ownerUid, title, description, category",
+      });
     }
 
-    // ✅ Fetch owner details if not passed
+    /* ----------------------------------------
+       👤 Auto-Fetch Owner Details (if missing)
+    ------------------------------------------- */
     let finalName = ownerName;
     let finalEmail = ownerEmail;
     let finalPhone = ownerPhone;
 
     if (!ownerName || !ownerEmail || !ownerPhone) {
       const user = await User.findOne({ uid: ownerUid });
+
       if (user) {
         finalName = finalName || user.name;
         finalEmail = finalEmail || user.email;
@@ -76,58 +159,56 @@ export const createAd = async (req, res) => {
       }
     }
 
-    // ✅ Handle Cloudinary uploads
+    /* ----------------------------------------
+       🧪 Category-wise Validation
+    ------------------------------------------- */
+    const missing = validateCategoryData(category, body);
+
+    if (missing.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Missing required fields for ${category}`,
+        missingFields: missing,
+      });
+    }
+
+    /* ----------------------------------------
+       ☁️ Cloudinary Uploads
+    ------------------------------------------- */
     const imagePaths = req.files ? req.files.map((f) => f.path || f.secure_url) : [];
 
-    // ✅ Create ad in "Pending" state
+    /* ----------------------------------------
+       🟡 Create the new Ad
+    ------------------------------------------- */
     const newAd = await Ad.create({
+      ...body, // auto insert all category fields
       ownerUid,
       ownerName: finalName || "Unknown Seller",
       ownerEmail: finalEmail || "",
       ownerPhone: finalPhone || "",
-      title,
-      description,
-      category,
-      subcategory,
-      price,
-      negotiable: negotiable === "true" || negotiable === true,
-      condition,
-      city,
-      location,
-      deliveryAvailable: deliveryAvailable === "true" || deliveryAvailable === true,
       images: imagePaths,
-      bedrooms,
-      bathrooms,
-      area,
-      mileage,
-      year,
-      brand,
-      warranty,
-      size,
-      color,
-      salary,
-      quantity,
-      ageGroup,
-      fileType,
-      accessType,
-      status: "Pending", // 🟡 user ads will not go live until admin approves
-      reportReason: "",  // clean by default
+      negotiable: body.negotiable === "true" || body.negotiable === true,
+      deliveryAvailable:
+        body.deliveryAvailable === "true" || body.deliveryAvailable === true,
+      status: "Pending",
+      reportReason: "",
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
-      message: "✅ Ad submitted successfully and is pending admin approval.",
+      message: "Ad submitted successfully and sent for admin approval.",
       ad: newAd,
     });
   } catch (error) {
-    console.error("❌ Error creating ad:", error);
-    res.status(500).json({
+    console.error("❌ CREATE AD ERROR:", error);
+    return res.status(500).json({
       success: false,
-      message: "Server error while creating ad",
+      message: "Internal Server Error while creating ad",
       error: error.message,
     });
   }
 };
+
 
 
 /* ================================
