@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import Sidebar from "../../components/Sidebar/Sidebar.jsx";
+import Sidebar from "../../Components/Sidebar/Sidebar.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";

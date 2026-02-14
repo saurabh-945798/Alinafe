@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Sidebar from "../../components/Sidebar/Sidebar.jsx";
+import Sidebar from "../../Components/Sidebar/Sidebar.jsx";
 import { Heart, MapPin, Trash2, FolderOpen } from "lucide-react";
 import api from "../../api/axios"; // ✅ interceptor
 import { useAuth } from "../../context/AuthContext";
