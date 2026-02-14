@@ -1,0 +1,19 @@
+# Node modules everywhere
+node_modules/
+**/node_modules/
+
+# Env files everywhere
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Build folders
+dist/
+build/
+frontend/dist/
+admin/dist/
+
+# Logs
+logs
+*.log
