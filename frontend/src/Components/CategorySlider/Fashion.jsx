@@ -1,0 +1,8 @@
+import React from "react";
+import BaseCategorySlider from "./BaseCategorySlider";
+
+const FashionBeauty = () => {
+  return <BaseCategorySlider categoryTitle="Fashion" category="Fashion" />;
+};
+
+export default FashionBeauty;
