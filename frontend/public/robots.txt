@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+Disallow: /login
+Disallow: /register
+
+Sitemap: https://alinafe.in/sitemap.xml
+    
