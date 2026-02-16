@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Mail,
@@ -8,6 +7,7 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react";
+import api from "../../utils/api.js";
 
 const AdminContactInbox = () => {
   const [messages, setMessages] = useState([]);
@@ -16,12 +16,13 @@ const AdminContactInbox = () => {
 
   const fetchMessages = async () => {
     try {
-      const res = await axios.get(
-        "https://localhost:5000/api/contact/admin/messages"
-      );
+      const res = await api.get("/contact/admin/messages");
       setMessages(res.data.data);
     } catch (err) {
-      console.error("Failed to fetch messages", err);
+      console.error(
+        "Failed to fetch messages",
+        err?.response?.data?.message || err.message
+      );
     } finally {
       setLoading(false);
     }
@@ -29,12 +30,13 @@ const AdminContactInbox = () => {
 
   const markAsRead = async (id) => {
     try {
-      await axios.put(
-        `https://localhost:5000/api/contact/admin/messages/${id}/read`
-      );
+      await api.put(`/contact/admin/messages/${id}/read`);
       fetchMessages();
     } catch (err) {
-      console.error("Failed to mark as read", err);
+      console.error(
+        "Failed to mark as read",
+        err?.response?.data?.message || err.message
+      );
     }
   };
 

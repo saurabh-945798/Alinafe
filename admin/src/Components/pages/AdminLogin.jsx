@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
+import api from "../../utils/api.js";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -17,10 +17,7 @@ const AdminLogin = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        "https://localhost:5000/api/admin/auth/login",
-        form
-      );
+      const res = await api.post("/admin/auth/login", form);
 
       // ✅ SAVE TOKEN + ADMIN DATA (VERY IMPORTANT)
       localStorage.setItem("adminToken", res.data.token);
@@ -36,7 +33,9 @@ const AdminLogin = () => {
 
       navigate("/admin");
     } catch (err) {
-      Swal.fire("Login Failed", "Invalid email or password", "error");
+      const message =
+        err?.response?.data?.message || "Invalid email or password";
+      Swal.fire("Login Failed", message, "error");
     } finally {
       setLoading(false);
     }

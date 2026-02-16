@@ -37,7 +37,6 @@ ChartJS.register(
 );
 
 const UserGrowth = () => {
-  const BASE_URL = "https://localhost:5000";
   const navigate = useNavigate();
 
   const [stats, setStats] = useState(null);

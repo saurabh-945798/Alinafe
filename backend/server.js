@@ -62,8 +62,8 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
-// allowed frontends
-const allowedOrigins = [
+// allowed frontends (env-first for production)
+const defaultAllowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
   "https://alinafe.netlify.app",
@@ -71,6 +71,14 @@ const allowedOrigins = [
   "https://zitheke-admin.netlify.app",
   "https://alinafe-admin.netlify.app",
 ];
+
+const envAllowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins =
+  envAllowedOrigins.length > 0 ? envAllowedOrigins : defaultAllowedOrigins;
 
 // BODY PARSERS
 app.use(express.json({ limit: "20mb" }));
