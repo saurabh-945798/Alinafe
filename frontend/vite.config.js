@@ -11,6 +11,11 @@ export default defineConfig(({ command }) => {
 
   return {
     plugins: [react()],
+    resolve: {
+      alias: {
+        "@": path.resolve(__dirname, "./src"),
+      },
+    },
     server: isDev
       ? {
           proxy: {
@@ -23,4 +28,3 @@ export default defineConfig(({ command }) => {
       : undefined,
   };
 });
-

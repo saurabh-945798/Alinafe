@@ -41,7 +41,6 @@ const CategoryPage = () => {
   const [filters, setFilters] = useState({
     minPrice: "",
     maxPrice: "",
-    condition: "",
     city: "",
   });
 
@@ -107,13 +106,6 @@ const CategoryPage = () => {
         a.city?.toLowerCase().includes(activeFilters.city.toLowerCase())
       );
     }
-    if (activeFilters.condition) {
-      result = result.filter(
-        (a) =>
-          a.condition?.toLowerCase().trim() ===
-          activeFilters.condition.toLowerCase().trim()
-      );
-    }
     return result;
   };
 
@@ -130,7 +122,6 @@ const CategoryPage = () => {
     setFilters({
       minPrice: "",
       maxPrice: "",
-      condition: "",
       city: "",
     });
     setFiltered(ads);
@@ -345,13 +336,6 @@ const CategoryPage = () => {
             </div>
           )}
 
-          {!isJobsOrServices && !isPetsCategory && (
-            <div>
-              <p className="filter-title">Condition</p>
-              {categoryFilters()}
-            </div>
-          )}
-
           <div>
             <p className="filter-title">Location</p>
             <input
@@ -539,7 +523,6 @@ const CategoryPage = () => {
                     className="filter-input"
                   />
 
-                  {categoryFilters()}
                 </>
               )}
 

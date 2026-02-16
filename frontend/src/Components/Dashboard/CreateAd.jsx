@@ -546,7 +546,7 @@ const CreateAd = () => {
     setUploading(true);
 
     try {
-      await api.post("/api/ads/create", formData, {
+      await api.post("/ads/create", formData, {
         headers: { "Content-Type": "multipart/form-data" },
         
       });
