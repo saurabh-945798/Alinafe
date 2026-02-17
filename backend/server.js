@@ -62,7 +62,6 @@ connectDB();
 const app = express();
 const server = http.createServer(app);
 
-// allowed frontends (env-first for production)
 const defaultAllowedOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
@@ -70,7 +69,9 @@ const defaultAllowedOrigins = [
   "https://zitheke.netlify.app",
   "https://zitheke-admin.netlify.app",
   "https://alinafe-admin.netlify.app",
+  "https://admin.alinafe.in", // ✅ ADD THIS
 ];
+
 
 const envAllowedOrigins = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
