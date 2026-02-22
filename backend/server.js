@@ -69,18 +69,16 @@ connectDB();
 
 const app = express();
 const server = http.createServer(app);
-app.set("trust proxy", Number(process.env.TRUST_PROXY_HOPS || 1));
+app.set("trust proxy", 1);
 
 const defaultAllowedOrigins = [
   "http://localhost:5173",
-  "http://localhost:5174",
-  "https://alinafe.netlify.app",
-  "https://zitheke.netlify.app",
-  "https://zitheke-admin.netlify.app",
-  "https://alinafe-admin.netlify.app",
-  "https://admin.alinafe.in", // ✅ ADD THIS
+  "http://localhost:3000",
+  "https://alinafe.in",
+  "https://www.alinafe.in",
+  "https://admin.alinafe.in",
+  "https://api.alinafe.com",
 ];
-
 
 const envAllowedOrigins = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
@@ -89,6 +87,7 @@ const envAllowedOrigins = (process.env.ALLOWED_ORIGINS || "")
 
 const allowedOrigins =
   envAllowedOrigins.length > 0 ? envAllowedOrigins : defaultAllowedOrigins;
+const allowedOriginSet = new Set(allowedOrigins);
 
 // BODY PARSERS
 app.use(express.json({ limit: "20mb" }));
@@ -119,10 +118,18 @@ app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOriginSet.has(origin)) {
         return callback(null, true);
       }
-      return callback(new Error("CORS blocked"));
+      console.warn(
+        JSON.stringify({
+          ts: new Date().toISOString(),
+          level: "warn",
+          msg: "cors_blocked",
+          origin,
+        })
+      );
+      return callback(null, false);
     },
     credentials: true,
   })
@@ -247,11 +254,19 @@ const io = new Server(server, {
       // allow server-to-server or curl
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOriginSet.has(origin)) {
         return callback(null, true);
       }
 
-      return callback(new Error("Socket CORS blocked"));
+      console.warn(
+        JSON.stringify({
+          ts: new Date().toISOString(),
+          level: "warn",
+          msg: "socket_cors_blocked",
+          origin,
+        })
+      );
+      return callback(null, false);
     },
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
