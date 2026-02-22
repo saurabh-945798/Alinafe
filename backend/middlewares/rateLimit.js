@@ -48,3 +48,15 @@ export const smsLimiter = rateLimit({
     message: "Too many OTP requests. Please try again shortly.",
   },
 });
+
+// Upload routes limiter (create/update ad media only)
+export const uploadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 50, // 50 requests/IP/window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Too many upload requests. Please try again later.",
+  },
+});

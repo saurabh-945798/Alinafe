@@ -705,21 +705,12 @@ const BaseCategorySlider = ({ categoryTitle, category }) => {
                           </div>
 
                           {/* ✅ Buttons: primary + ghost combo, micro hover glow */}
-                          <div className="mt-4 flex gap-3">
+                          <div className="mt-4 flex">
                             <button
                               onClick={() => navigate(`/ad/${item._id}`)}
-                              className="alinafe-btn-ghost w-1/2 font-semibold py-2.5"
+                              className="alinafe-btn-primary w-full font-semibold py-2.5"
                             >
                               View Details
-                            </button>
-
-                            <button
-                              onClick={() =>
-                                navigate(`/ad/${item._id}?contact=true`)
-                              }
-                              className="alinafe-btn-primary w-1/2 font-semibold py-2.5"
-                            >
-                              Contact Seller
                             </button>
                           </div>
                         </div>

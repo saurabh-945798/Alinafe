@@ -30,6 +30,9 @@ const MyAds = () => {
   const { user, getFirebaseToken } = useAuth();
   const navigate = useNavigate();
   const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").trim() || "/api";
+  const BACKEND_ORIGIN = API_BASE.startsWith("http")
+    ? API_BASE.replace(/\/api\/?$/, "")
+    : "";
 
   const [ads, setAds] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -274,7 +277,9 @@ const MyAds = () => {
                         ad.images?.[0]
                           ? ad.images[0].startsWith("http")
                             ? ad.images[0]
-                            : `${BASE_URL}${ad.images[0]}`
+                            : BACKEND_ORIGIN
+                            ? `${BACKEND_ORIGIN}${ad.images[0]}`
+                            : ad.images[0]
                           : "https://via.placeholder.com/400x300?text=No+Image"
                       }
                       alt={ad.title}

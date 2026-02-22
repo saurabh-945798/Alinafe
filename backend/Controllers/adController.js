@@ -1,29 +1,186 @@
 import mongoose from "mongoose";
+import fs from "fs/promises";
 import Ad from "../models/Ad.js";
 import User from "../models/User.js";
-import { v2 as cloudinary } from "cloudinary";
 import { EmailService } from "../Services/email.service.js";
+import { optimizeImageToJpeg } from "../utils/optimizeImage.js";
+import {
+  buildUploadUrlFromAbsolute,
+  getApiBaseUrl,
+  isCloudinaryUrl,
+  isLocalUploadUrl,
+  localAbsolutePathFromUrl,
+} from "../utils/uploadPath.js";
+import { uploadsRoot } from "../middlewares/uploadLocalMedia.js";
+import { validateMediaUrl } from "../utils/validateMediaUrl.js";
 
 /* ================================
    🧠 CLOUDINARY CONFIG
 ================================ */
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+const toBoolean = (value) => value === true || value === "true";
+const DEBUG_UPLOADS = String(process.env.DEBUG_UPLOADS || "").toLowerCase() === "true";
+
+const parseArrayInput = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string" && !value.trim().startsWith("[")) {
+    return value
+      .split(",")
+      .map((v) => v.trim())
+      .filter(Boolean);
+  }
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const debugUploadLog = (payload) => {
+  if (!DEBUG_UPLOADS) return;
+  console.log(
+    JSON.stringify({
+      ts: new Date().toISOString(),
+      level: "debug",
+      msg: "upload_debug",
+      ...payload,
+    })
+  );
+};
+
+const cleanupAbsoluteFiles = async (absolutePaths = []) => {
+  await Promise.all(
+    absolutePaths.map(async (p) => {
+      if (!p) return;
+      try {
+        await fs.unlink(p);
+      } catch {
+        // best effort
+      }
+    })
+  );
+};
+
+const ensureValidMediaUrlsOrThrow = (urls = []) => {
+  for (const mediaUrl of urls) {
+    const check = validateMediaUrl(mediaUrl);
+    if (!check.valid) {
+      throw new Error(check.message);
+    }
+  }
+};
+
+const normalizeLocalImageUploads = async (files = []) => {
+  const items = [];
+  const apiBaseUrl = getApiBaseUrl();
+
+  if (!apiBaseUrl) {
+    throw new Error("API_BASE_URL not configured");
+  }
+
+  for (const file of files) {
+    let originalBytes = 0;
+    try {
+      const beforeStat = await fs.stat(file.path);
+      originalBytes = Number(beforeStat.size || 0);
+    } catch {}
+
+    const optimizedAbsolutePath = await optimizeImageToJpeg(file.path);
+    const normalizedOptimizedPath = String(optimizedAbsolutePath || "").trim();
+    if (!normalizedOptimizedPath.toLowerCase().endsWith(".jpg")) {
+      throw new Error("Optimized image must end with .jpg");
+    }
+
+    try {
+      await fs.access(normalizedOptimizedPath);
+    } catch {
+      throw new Error("Optimized image not found on disk");
+    }
+
+    let optimizedBytes = 0;
+    try {
+      const afterStat = await fs.stat(normalizedOptimizedPath);
+      optimizedBytes = Number(afterStat.size || 0);
+    } catch {}
+
+    const ratio =
+      originalBytes > 0
+        ? Number((optimizedBytes / originalBytes).toFixed(3))
+        : null;
+
+    const finalUrl = buildUploadUrlFromAbsolute(
+      normalizedOptimizedPath,
+      uploadsRoot,
+      apiBaseUrl
+    );
+
+    debugUploadLog({
+      kind: "image",
+      rawPath: String(file.path || ""),
+      uploadsRoot: uploadsRoot,
+      optimizedAbs: normalizedOptimizedPath,
+      finalUrl,
+      apiBaseUrl,
+      originalBytes,
+      optimizedBytes,
+      compressionRatio: ratio,
+    });
+
+    items.push({
+      url: finalUrl,
+      absPath: normalizedOptimizedPath,
+    });
+  }
+  return items;
+};
+
+const normalizeLocalVideoUpload = (file) => {
+  if (!file?.path) return null;
+  const apiBaseUrl = getApiBaseUrl();
+  if (!apiBaseUrl) {
+    throw new Error("API_BASE_URL not configured");
+  }
+
+  const normalizedPath = String(file.path || "").trim();
+  if (!normalizedPath.toLowerCase().endsWith(".mp4")) {
+    throw new Error("Uploaded video must end with .mp4");
+  }
+
+  const finalUrl = buildUploadUrlFromAbsolute(normalizedPath, uploadsRoot, apiBaseUrl);
+
+  debugUploadLog({
+    kind: "video",
+    rawPath: String(file.path || ""),
+    uploadsRoot: uploadsRoot,
+    optimizedAbs: normalizedPath,
+    finalUrl,
+    apiBaseUrl,
+    fileSizeBytes: Number(file.size || 0),
+    mimetype: file.mimetype || "",
+  });
+
+  return { url: finalUrl, absPath: normalizedPath };
+};
+
+const deleteLocalFileByUrl = async (mediaUrl) => {
+  if (!isLocalUploadUrl(mediaUrl) || isCloudinaryUrl(mediaUrl)) return;
+  try {
+    const filePath = localAbsolutePathFromUrl(mediaUrl, uploadsRoot);
+    await fs.unlink(filePath);
+  } catch {
+    // ignore missing file errors
+  }
+};
 
 /* ================================
    🟢 CREATE AD (Pending by default)
 ================================ */
 export const createAd = async (req, res) => {
   try {
-    // 1️⃣ Clone body (DO NOT destructure)
     const body = { ...req.body };
     const firebaseUser = req.firebaseUser || {};
 
-
-    // 2️⃣ Required fields check
     if (!firebaseUser.uid || !body.title || !body.description || !body.category) {
       return res.status(400).json({
         success: false,
@@ -31,17 +188,14 @@ export const createAd = async (req, res) => {
       });
     }
 
-    // 3️⃣ Remove empty values (SAFE CLEANUP)
     Object.keys(body).forEach((key) => {
       if (body[key] === "" || body[key] === null || body[key] === undefined) {
         delete body[key];
       }
     });
-    // 4) Owner identity comes from verified token/DB only (ignore spoofed body identity)
+
     body.ownerUid = firebaseUser.uid;
-    const ownerUser = await User.findOne({ uid: firebaseUser.uid }).select(
-      "name email phone"
-    );
+    const ownerUser = await User.findOne({ uid: firebaseUser.uid }).select("name email phone");
     body.ownerEmail = ownerUser?.email || firebaseUser.email || "";
     body.ownerName =
       ownerUser?.name ||
@@ -50,28 +204,14 @@ export const createAd = async (req, res) => {
       "User";
     body.ownerPhone = ownerUser?.phone || "";
 
-    // 5️⃣ Boolean normalization
-    body.negotiable =
-      body.negotiable === "true" || body.negotiable === true;
+    body.negotiable = toBoolean(body.negotiable);
+    body.deliveryAvailable = toBoolean(body.deliveryAvailable);
 
-    body.deliveryAvailable =
-      body.deliveryAvailable === "true" || body.deliveryAvailable === true;
+    const imageUploadItems = await normalizeLocalImageUploads(req.files?.images || []);
+    const imagePaths = imageUploadItems.map((i) => i.url);
+    const createdAbsPaths = imageUploadItems.map((i) => i.absPath);
 
-    // 6️⃣ Images from Cloudinary / Multer
-    const imagePaths = req.files?.images
-      ? req.files.images.map((f) => f.path || f.secure_url)
-      : [];
-
-    /* ==================================================
-       🔎 6.5️⃣ AUTO TAG GENERATION (ROOT SEARCH FIX)
-       - category
-       - subcategory
-       - title keywords
-       - existing tags (if any)
-    ================================================== */
     const autoTags = new Set();
-
-    // from title
     if (body.title) {
       body.title
         .toLowerCase()
@@ -81,58 +221,42 @@ export const createAd = async (req, res) => {
         });
     }
 
-    // from category & subcategory
     if (body.category) autoTags.add(body.category.toLowerCase());
     if (body.subcategory) autoTags.add(body.subcategory.toLowerCase());
 
-    // preserve incoming tags if any
     if (Array.isArray(body.tags)) {
-      body.tags.forEach((t) => autoTags.add(t.toLowerCase()));
+      body.tags.forEach((t) => autoTags.add(String(t).toLowerCase()));
     }
 
     body.tags = Array.from(autoTags);
 
-    // 7️⃣ 🎥 VIDEO UPLOAD (OPTIONAL — MAX 30 SEC)
-    let videoData = {};
+    const uploadedVideo = req.files?.video?.[0] || null;
+    const videoUploadItem = normalizeLocalVideoUpload(uploadedVideo);
+    const localVideoUrl = videoUploadItem?.url || "";
+    if (videoUploadItem?.absPath) createdAbsPaths.push(videoUploadItem.absPath);
 
-    if (req.files?.video?.[0]) {
-      const videoFile = req.files.video[0];
-
-      const uploadedVideo = await cloudinary.uploader.upload(videoFile.path, {
-        resource_type: "video",
-        folder: "alinafe/videos",
+    try {
+      ensureValidMediaUrlsOrThrow(imagePaths);
+      if (localVideoUrl) ensureValidMediaUrlsOrThrow([localVideoUrl]);
+    } catch (validationError) {
+      await cleanupAbsoluteFiles(createdAbsPaths);
+      return res.status(400).json({
+        success: false,
+        message: validationError.message || "Invalid media URL generated",
       });
-
-      // ✅ Thumbnail (Cloudinary way) - format safe
-      const thumbnailUrl = cloudinary.url(uploadedVideo.public_id, {
-        resource_type: "video",
-        format: "jpg",
-      });
-
-      // ⛔ HARD LIMIT: 30 seconds (cleanup too)
-      if (uploadedVideo.duration > 30) {
-        // ✅ delete uploaded video to avoid junk
-        await cloudinary.uploader.destroy(uploadedVideo.public_id, {
-          resource_type: "video",
-        });
-
-        return res.status(400).json({
-          success: false,
-          message: "Video duration must be 30 seconds or less",
-        });
-      }
-
-      videoData = {
-        url: uploadedVideo.secure_url,
-        thumbnail: thumbnailUrl,
-        duration: uploadedVideo.duration,
-        size: uploadedVideo.bytes,
-        format: uploadedVideo.format,
-        publicId: uploadedVideo.public_id,
-      };
     }
 
-    // 8️⃣ Create Ad
+    const videoData = localVideoUrl
+      ? {
+          url: localVideoUrl,
+          thumbnail: "",
+          duration: 0,
+          size: 0,
+          format: "",
+          publicId: "",
+        }
+      : {};
+
     const newAd = await Ad.create({
       ...body,
       images: imagePaths,
@@ -141,7 +265,6 @@ export const createAd = async (req, res) => {
       reportReason: "",
     });
 
-    // Send ad posted email (non-blocking)
     if (body.ownerEmail) {
       EmailService.sendTemplate({
         to: body.ownerEmail,
@@ -155,29 +278,29 @@ export const createAd = async (req, res) => {
       });
     }
 
-    // 9️⃣ Update user city / location (safe)
     const updateFields = {};
-
-    if (body.city && body.city.trim() !== "") {
-      updateFields.city = body.city.trim();
-    }
-
-    if (body.location && body.location.trim() !== "") {
-      updateFields.location = body.location.trim();
-    }
+    if (body.city && body.city.trim() !== "") updateFields.city = body.city.trim();
+    if (body.location && body.location.trim() !== "") updateFields.location = body.location.trim();
 
     if (Object.keys(updateFields).length > 0) {
       await User.updateOne({ uid: firebaseUser.uid }, { $set: updateFields });
     }
 
-    // 🔟 Final response
     return res.status(201).json({
       success: true,
       message: "Ad submitted successfully and is pending admin approval.",
       ad: newAd,
     });
   } catch (error) {
-    console.error("❌ CREATE AD ERROR:", error);
+    console.error("CREATE AD ERROR:", error);
+    if (
+      String(error?.message || "").toLowerCase().includes("api_base_url not configured")
+    ) {
+      return res.status(500).json({
+        success: false,
+        message: "API_BASE_URL not configured",
+      });
+    }
     return res.status(500).json({
       success: false,
       message: "Server error while creating ad",
@@ -339,20 +462,20 @@ export const getAllAds = async (req, res) => {
 export const updateAd = async (req, res) => {
   try {
     const updates = { ...req.body };
+    const ad = await Ad.findById(req.params.id);
 
-    // 🖼️ Update images
-    const imagePaths = req.files?.images
-      ? req.files.images.map((f) => f.path || f.secure_url)
-      : [];
+    if (!ad) {
+      return res.status(404).json({ message: "Ad not found" });
+    }
 
-    if (imagePaths.length > 0) updates.images = imagePaths;
+    if (Object.prototype.hasOwnProperty.call(updates, "negotiable")) {
+      updates.negotiable = toBoolean(updates.negotiable);
+    }
+    if (Object.prototype.hasOwnProperty.call(updates, "deliveryAvailable")) {
+      updates.deliveryAvailable = toBoolean(updates.deliveryAvailable);
+    }
 
-    /* ==================================================
-       🔁 AUTO TAG UPDATE (IF TITLE / CATEGORY / SUBCATEGORY CHANGED)
-    ================================================== */
     const updatedTags = new Set();
-
-    // from title
     if (updates.title) {
       updates.title
         .toLowerCase()
@@ -362,65 +485,77 @@ export const updateAd = async (req, res) => {
         });
     }
 
-    // from category & subcategory
     if (updates.category) updatedTags.add(updates.category.toLowerCase());
-    if (updates.subcategory)
-      updatedTags.add(updates.subcategory.toLowerCase());
+    if (updates.subcategory) updatedTags.add(updates.subcategory.toLowerCase());
 
-    // preserve manual tags if any
     if (Array.isArray(updates.tags)) {
-      updates.tags.forEach((t) => updatedTags.add(t.toLowerCase()));
+      updates.tags.forEach((t) => updatedTags.add(String(t).toLowerCase()));
     }
 
     if (updatedTags.size > 0) {
       updates.tags = Array.from(updatedTags);
     }
 
-    // 🎥 Replace video if uploaded
-    if (req.files?.video?.[0]) {
-      const videoFile = req.files.video[0];
+    const removeImageUrls = parseArrayInput(req.body.removeImageUrls);
+    const removeSet = new Set(removeImageUrls);
+    const retainedImages = (ad.images || []).filter((url) => !removeSet.has(url));
 
-      const uploadedVideo = await cloudinary.uploader.upload(videoFile.path, {
-        resource_type: "video",
-        folder: "alinafe/videos",
-      });
+    for (const removeUrl of removeImageUrls) {
+      await deleteLocalFileByUrl(removeUrl);
+    }
 
-      const thumbnailUrl = cloudinary.url(uploadedVideo.public_id, {
-        resource_type: "video",
-        format: "jpg",
-      });
+    const appendedImageItems = await normalizeLocalImageUploads(req.files?.images || []);
+    const appendedImageUrls = appendedImageItems.map((i) => i.url);
+    const createdAbsPaths = appendedImageItems.map((i) => i.absPath);
+    updates.images = [...retainedImages, ...appendedImageUrls];
 
-      if (uploadedVideo.duration > 30) {
-        // ✅ delete uploaded video to avoid junk
-        await cloudinary.uploader.destroy(uploadedVideo.public_id, {
-          resource_type: "video",
-        });
-
-        return res.status(400).json({
-          success: false,
-          message: "Video duration must be 30 seconds or less",
-        });
-      }
-
+    const removeCurrentVideo = toBoolean(req.body.removeCurrentVideo);
+    if (removeCurrentVideo && ad.video?.url) {
+      await deleteLocalFileByUrl(ad.video.url);
       updates.video = {
-        url: uploadedVideo.secure_url,
-        thumbnail: thumbnailUrl,
-        duration: uploadedVideo.duration,
-        size: uploadedVideo.bytes,
-        format: uploadedVideo.format,
-        publicId: uploadedVideo.public_id,
+        url: "",
+        thumbnail: "",
+        duration: 0,
+        size: 0,
+        format: "",
+        publicId: "",
       };
     }
 
-    const updatedAd = await Ad.findByIdAndUpdate(
-      req.params.id,
-      updates,
-      { new: true }
-    );
-
-    if (!updatedAd) {
-      return res.status(404).json({ message: "Ad not found" });
+    if (req.files?.video?.[0]) {
+      if (ad.video?.url) {
+        await deleteLocalFileByUrl(ad.video.url);
+      }
+      const videoUploadItem = normalizeLocalVideoUpload(req.files.video[0]);
+      const newVideoUrl = videoUploadItem?.url || "";
+      if (videoUploadItem?.absPath) createdAbsPaths.push(videoUploadItem.absPath);
+      updates.video = {
+        url: newVideoUrl || "",
+        thumbnail: "",
+        duration: 0,
+        size: 0,
+        format: "",
+        publicId: "",
+      };
     }
+
+    delete updates.removeImageUrls;
+    delete updates.removeCurrentVideo;
+
+    try {
+      ensureValidMediaUrlsOrThrow(updates.images || []);
+      if (updates.video?.url) ensureValidMediaUrlsOrThrow([updates.video.url]);
+    } catch (validationError) {
+      await cleanupAbsoluteFiles(createdAbsPaths);
+      return res.status(400).json({
+        success: false,
+        message: validationError.message || "Invalid media URL generated",
+      });
+    }
+
+    const updatedAd = await Ad.findByIdAndUpdate(req.params.id, updates, {
+      new: true,
+    });
 
     res.status(200).json({
       message: "Ad updated successfully",
@@ -428,11 +563,17 @@ export const updateAd = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating ad:", error);
+    if (
+      String(error?.message || "").toLowerCase().includes("api_base_url not configured")
+    ) {
+      return res.status(500).json({
+        success: false,
+        message: "API_BASE_URL not configured",
+      });
+    }
     res.status(500).json({ message: "Server error" });
   }
 };
-
-
 /* ================================
    ❌ DELETE AD
 ================================ */
@@ -441,11 +582,12 @@ export const deleteAd = async (req, res) => {
     const ad = await Ad.findById(req.params.id);
     if (!ad) return res.status(404).json({ message: "Ad not found" });
 
-    // 🗑️ Delete video from Cloudinary if exists
-    if (ad.video?.publicId) {
-      await cloudinary.uploader.destroy(ad.video.publicId, {
-        resource_type: "video",
-      });
+    for (const imageUrl of ad.images || []) {
+      await deleteLocalFileByUrl(imageUrl);
+    }
+
+    if (ad.video?.url) {
+      await deleteLocalFileByUrl(ad.video.url);
     }
 
     await ad.deleteOne();
@@ -455,7 +597,6 @@ export const deleteAd = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-
 /* ================================
    💰 MARK AS SOLD
 ================================ */
@@ -610,6 +751,7 @@ export const searchAds = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 

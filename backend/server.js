@@ -8,7 +8,6 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import http from "http";
 import { Server } from "socket.io";
-import { v2 as cloudinary } from "cloudinary";
 import mongoose from "mongoose";
 
 import connectDB from "./config/db.js";
@@ -34,6 +33,7 @@ import searchRoutes from "./routes/searchRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import emailRoutes from "./routes/email.routes.js";
 import phoneAuthRoutes from "./routes/phoneAuth.routes.js";
+import { getDiskFreeSpace } from "./utils/diskUtils.js";
 
 
 
@@ -56,11 +56,20 @@ import {
   getSocketId
 } from "./Services/presenceService.js";
 
+let morganMiddleware = null;
+try {
+  const morganModule = await import("morgan");
+  morganMiddleware = morganModule.default || morganModule;
+} catch {
+  console.warn("[server] morgan not installed, request logging middleware disabled.");
+}
+
 dotenv.config();
 connectDB();
 
 const app = express();
 const server = http.createServer(app);
+app.set("trust proxy", Number(process.env.TRUST_PROXY_HOPS || 1));
 
 const defaultAllowedOrigins = [
   "http://localhost:5173",
@@ -85,6 +94,26 @@ const allowedOrigins =
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+const logDir = path.join(process.cwd(), "logs");
+if (!fs.existsSync(logDir)) fs.mkdirSync(logDir, { recursive: true });
+const accessLogStream = fs.createWriteStream(path.join(logDir, "access.log"), {
+  flags: "a",
+});
+const errorLogStream = fs.createWriteStream(path.join(logDir, "error.log"), {
+  flags: "a",
+});
+
+if (morganMiddleware) {
+  morganMiddleware.token("real-ip", (req) => req.ip || "");
+  app.use(
+    morganMiddleware(
+      ":date[iso] :real-ip :method :url :status :res[content-length] - :response-time ms",
+      { stream: accessLogStream }
+    )
+  );
+  app.use(morganMiddleware("dev"));
+}
+
 // 🌍 GLOBAL CORS — FINAL FIXED VERSION
 app.use(
   cors({
@@ -108,10 +137,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const uploadsPath = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadsPath)) fs.mkdirSync(uploadsPath);
+if (!fs.existsSync(uploadsPath)) fs.mkdirSync(uploadsPath, { recursive: true });
 
 // STATIC FILES
-app.use("/uploads", express.static(uploadsPath));
+app.use(
+  "/uploads",
+  express.static(uploadsPath, {
+    etag: true,
+    maxAge: "30d",
+    fallthrough: false,
+  })
+);
 
 /* =========================
    PUBLIC / AUTH ROUTES
@@ -174,9 +210,27 @@ app.get("/", (req, res) => {
   res.send("🔥 Alinafe + Zitheke API Running");
 });
 
-app.use((req, res) =>
-  res.status(404).json({ message: "Route not found" })
-);
+app.use((req, res) => res.status(404).json({ message: "Route not found" }));
+
+app.use((err, req, res, next) => {
+  errorLogStream.write(
+    `${JSON.stringify({
+      ts: new Date().toISOString(),
+      level: "error",
+      msg: "unhandled_route_error",
+      method: req.method,
+      url: req.originalUrl,
+      ip: req.ip,
+      error: err?.message || String(err),
+      stack: err?.stack || "",
+    })}\n`
+  );
+
+  if (res.headersSent) return next(err);
+  return res
+    .status(500)
+    .json({ success: false, message: "Internal server error" });
+});
 
 
 // ===============================
@@ -476,4 +530,61 @@ process.on("SIGINT", async () => {
   console.log("🔻 Closing Server...");
   await mongoose.connection.close();
   process.exit(0);
+});
+
+const logDiskSpace = async () => {
+  try {
+    const disk = await getDiskFreeSpace("/");
+    console.log(
+      JSON.stringify({
+        ts: new Date().toISOString(),
+        level: "info",
+        msg: "disk_space",
+        ...disk,
+      })
+    );
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        ts: new Date().toISOString(),
+        level: "error",
+        msg: "disk_space_check_failed",
+        error: error?.message || String(error),
+      })
+    );
+  }
+};
+
+logDiskSpace();
+setInterval(logDiskSpace, 24 * 60 * 60 * 1000);
+
+process.on("unhandledRejection", (reason) => {
+  console.error(
+    JSON.stringify({
+      ts: new Date().toISOString(),
+      level: "error",
+      msg: "unhandled_rejection",
+      error: reason?.message || String(reason),
+      stack: reason?.stack || "",
+    })
+  );
+});
+
+process.on("uncaughtException", (error) => {
+  console.error(
+    JSON.stringify({
+      ts: new Date().toISOString(),
+      level: "fatal",
+      msg: "uncaught_exception",
+      error: error?.message || String(error),
+      stack: error?.stack || "",
+    })
+  );
+
+  setTimeout(async () => {
+    try {
+      await mongoose.connection.close();
+    } catch {}
+    process.exit(1);
+  }, 1500);
 });
