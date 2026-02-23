@@ -40,7 +40,10 @@ const KitchenwarePromo = () => {
         const res = await fetch(`${API_BASE}/ads?limit=10&page=1`);
         const data = await res.json();
         const ads = Array.isArray(data?.ads) ? data.ads : [];
-        setProducts(ads.slice(0, 10));
+        const filteredAds = ads.filter(
+          (ad) => !["Jobs", "Services"].includes(ad?.category)
+        );
+        setProducts(filteredAds.slice(0, 10));
       } catch (err) {
         console.error("Promo ads fetch failed", err);
         setProducts([]);
@@ -124,11 +127,11 @@ const KitchenwarePromo = () => {
             variants={item}
             className="text-4xl md:text-5xl font-bold leading-tight"
           >
-            Explore <span className="text-[#5EEAD4]">Latest Ads</span>
+            Explore <span className="text-[#5EEAD4]">Latest Products</span>
             <br /> from top sellers
           </motion.h1>
 
-          <motion.p
+          <motion.p 
             variants={item}
             className="mt-5 text-lg text-[#E9EDFF] max-w-xl"
           >
@@ -193,12 +196,12 @@ const KitchenwarePromo = () => {
             <div className="h-[420px] rounded-3xl bg-white/10 border border-white/20 flex items-center justify-center">
               <div className="flex items-center gap-2 text-white">
                 <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Loading latest ads...</span>
+                <span>Loading latest Products...</span>
               </div>
             </div>
           ) : products.length === 0 ? (
             <div className="h-[420px] rounded-3xl bg-white/10 border border-white/20 flex items-center justify-center px-6 text-center text-white/90">
-              No latest ads available right now.
+              No latest Products available right now.
             </div>
           ) : (
             <>

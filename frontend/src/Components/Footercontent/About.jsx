@@ -39,7 +39,7 @@ const About = () => {
         />
       <div className="mt-4 text-center">
         <p className="text-base font-bold text-[#1F2370] whitespace-nowrap">
-          <span className="uppercase">Dinesh Chhabra</span> - Founder & CEO of Alinafe
+          <span className="uppercase">Dinesh Chhabra</span> - Founder & CEO of Alinafe India
         </p>
       </div>
 

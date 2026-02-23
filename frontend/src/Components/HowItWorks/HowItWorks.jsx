@@ -60,7 +60,7 @@ const HowItWorks = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-gray-600 max-w-2xl mx-auto mb-14"
+          className="text-gray-600 max-w-4xl mx-auto mb-14 text-left"
         >
           A simple, secure and transparent process to help you buy or sell anything locally with confidence.
         </motion.p>
