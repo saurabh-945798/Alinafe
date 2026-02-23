@@ -6,11 +6,8 @@ import {
   ShieldCheck,
   Truck,
   Star,
-  PlusCircle,
   Loader2,
 } from "lucide-react";
-import Swal from "sweetalert2";
-import { useAuth } from "../../context/AuthContext.jsx";
 
 const container = {
   hidden: {},
@@ -31,19 +28,31 @@ const KitchenwarePromo = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
   const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").trim() || "/api";
 
   useEffect(() => {
     const fetchLatestAds = async () => {
       try {
-        const res = await fetch(`${API_BASE}/ads?limit=10&page=1`);
+        const res = await fetch(`${API_BASE}/ads?limit=80&page=1`);
         const data = await res.json();
         const ads = Array.isArray(data?.ads) ? data.ads : [];
         const filteredAds = ads.filter(
           (ad) => !["Jobs", "Services"].includes(ad?.category)
         );
-        setProducts(filteredAds.slice(0, 10));
+
+        const uniqueCategoryAds = [];
+        const seenCategories = new Set();
+
+        for (const ad of filteredAds) {
+          const category = (ad?.category || "").trim().toLowerCase();
+          if (!category || seenCategories.has(category)) continue;
+          seenCategories.add(category);
+          uniqueCategoryAds.push(ad);
+          if (uniqueCategoryAds.length === 5) break;
+        }
+
+        setProducts(uniqueCategoryAds);
+        setActiveIndex(0);
       } catch (err) {
         console.error("Promo ads fetch failed", err);
         setProducts([]);
@@ -62,26 +71,6 @@ const KitchenwarePromo = () => {
     }, 3500);
     return () => clearInterval(id);
   }, [products]);
-
-  const handlePostAdClick = async () => {
-    if (user?.uid) {
-      navigate("/dashboard/createAd");
-      return;
-    }
-
-    const result = await Swal.fire({
-      icon: "info",
-      title: "Login required",
-      text: "Please login to post an item.",
-      showCancelButton: true,
-      confirmButtonText: "Login",
-      cancelButtonText: "Cancel",
-    });
-
-    if (result.isConfirmed) {
-      navigate("/login");
-    }
-  };
 
   return (
     <section className="relative overflow-hidden py-24 px-6">
@@ -106,29 +95,11 @@ const KitchenwarePromo = () => {
           whileInView="show"
           viewport={{ once: true }}
         >
-          <motion.div
-            variants={item}
-            className="inline-flex items-center mb-5 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/20 text-sm text-[#E9EDFF]"
-          >
-            Limited deals near you
-          </motion.div>
-
-          <motion.div
-            variants={item}
-            className="inline-flex items-center gap-2 mb-4 px-4 py-2 rounded-full bg-white/15 backdrop-blur border border-white/30 shadow"
-          >
-            <Truck className="w-5 h-5 text-[#5EEAD4]" />
-            <span className="text-sm font-semibold tracking-wide text-white">
-              Alinafe Special
-            </span>
-          </motion.div>
-
           <motion.h1
             variants={item}
             className="text-4xl md:text-5xl font-bold leading-tight"
           >
-            Explore <span className="text-[#5EEAD4]">Latest Products</span>
-            <br /> from top sellers
+            Explore <span className="text-[#5EEAD4]">Best Deals</span> on Alinafe
           </motion.h1>
 
           <motion.p 
@@ -172,16 +143,6 @@ const KitchenwarePromo = () => {
               Explore All Ads
               <ArrowRight className="w-5 h-5" />
             </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handlePostAdClick}
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-xl border border-white/40 text-white font-semibold backdrop-blur hover:bg-white/10 transition"
-            >
-              <PlusCircle className="w-5 h-5" />
-              Post an Item
-            </motion.button>
           </motion.div>
         </motion.div>
 
@@ -205,13 +166,6 @@ const KitchenwarePromo = () => {
             </div>
           ) : (
             <>
-              {products[activeIndex]?.condition &&
-                products[activeIndex]?.category !== "Real Estate" && (
-                  <div className="absolute top-4 left-4 z-20 px-3 py-1.5 text-[11px] font-bold tracking-wide uppercase rounded-full backdrop-blur border border-white/30 shadow-lg bg-gradient-to-r from-[#0D9488] to-[#14B8A6] text-white">
-                    {products[activeIndex].condition === "New" ? "NEW" : "USED"}
-                  </div>
-                )}
-
               <div className="relative rounded-3xl overflow-hidden shadow-2xl">
                 <motion.img
                   key={activeIndex}
@@ -269,9 +223,6 @@ const KitchenwarePromo = () => {
                 </div>
                 <div className="text-xs text-gray-600 mt-1 flex flex-col gap-0.5">
                   <span>
-                    Seller: {products[activeIndex]?.ownerName || "Local Seller"}
-                  </span>
-                  <span>
                     {products[activeIndex]?.category || "General"} |{" "}
                     {products[activeIndex]?.city || "India"}
                   </span>
@@ -282,9 +233,7 @@ const KitchenwarePromo = () => {
         </motion.div>
       </div>
 
-      <div className="relative mt-16 text-center text-[#E9EDFF] text-sm animate-bounce">
-        Browse categories
-      </div>
+       
     </section>
   );
 };
