@@ -33,6 +33,7 @@ import searchRoutes from "./routes/searchRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import emailRoutes from "./routes/email.routes.js";
 import phoneAuthRoutes from "./routes/phoneAuth.routes.js";
+import ogPreviewRoutes from "./routes/ogPreview.routes.js";
 import { getDiskFreeSpace } from "./utils/diskUtils.js";
 
 
@@ -209,6 +210,9 @@ app.use("/api/admin", authMiddleware, adminRoutes);
 ========================= */
 app.use("/api/sellers", sellerStatsRoutes);
 app.use("/api/sellers", sellerRoutes);
+
+// Crawler OG preview route (non-api), keep before final 404.
+app.use("/", ogPreviewRoutes);
 
 /* =========================
    🏠 ROOT & 404
