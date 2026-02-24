@@ -4,6 +4,7 @@ import Ad from "../models/Ad.js";
 
 const router = express.Router();
 
+// Bots / crawlers that fetch OpenGraph previews
 const CRAWLER_REGEX =
   /(facebookexternalhit|WhatsApp|Twitterbot|LinkedInBot|TelegramBot|Slackbot)/i;
 
@@ -33,30 +34,36 @@ const buildCompactLocation = (ad) => {
   return [...new Set(parts)].join(", ");
 };
 
-router.get("/ad/:id", async (req, res, next) => {
+/**
+ * OG Preview Route (ONLY for crawlers)
+ * ✅ Use this URL in WhatsApp share preview:
+ *    https://alinafe.in/og/ad/<AD_ID>
+ *
+ * Normal user ad page remains:
+ *    https://alinafe.in/ad/<AD_ID>
+ */
+router.get("/og/ad/:id", async (req, res) => {
   const { id } = req.params;
+
   const userAgent = req.get("user-agent") || "";
   const isCrawler = CRAWLER_REGEX.test(userAgent);
 
-  const FRONTEND_BASE = trimSlashes(
-    process.env.NODE_ENV === "production"
-      ? process.env.FRONTEND_URL || "https://alinafe.in"
-      : "http://localhost:5173"
+  // If normal user hits OG route, redirect them to the real React page
+  const SITE_BASE = trimSlashes(
+    process.env.APP_BASE_URL ||
+      process.env.FRONTEND_URL ||
+      "https://alinafe.in"
   );
 
-if (!isCrawler) {
-  return next();
-}
-
-  const FRONTEND_BASE_URL =
-    process.env.APP_BASE_URL ||
-    process.env.FRONTEND_BASE_URL ||
-    "https://alinafe.in";
-  const APP_BASE = trimSlashes(FRONTEND_BASE_URL);
+  if (!isCrawler) {
+    return res.redirect(302, `${SITE_BASE}/ad/${id}`);
+  }
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    return res.status(400).send("<!doctype html><html><body>Invalid ad id</body></html>");
+    return res
+      .status(400)
+      .send("<!doctype html><html><body>Invalid ad id</body></html>");
   }
 
   try {
@@ -79,10 +86,15 @@ if (!isCrawler) {
     const locationText = buildCompactLocation(ad);
     const description = [priceText, locationText].filter(Boolean).join(" | ");
 
+    // Build OG image absolute URL
     const firstImage = Array.isArray(ad?.images) ? ad.images[0] : "";
-    const fallbackImage = `${APP_BASE}/logo.png`;
-    const imageUrl = toAbsoluteUrl(firstImage, APP_BASE) || fallbackImage;
-    const pageUrl = `${APP_BASE}/ad/${id}`;
+    const fallbackImage = `${SITE_BASE}/logo.png`;
+
+    // Ensure image URL is absolute and https
+    const imageUrl = toAbsoluteUrl(firstImage, SITE_BASE) || fallbackImage;
+
+    // og:url should be the real public page (React route)
+    const pageUrl = `${SITE_BASE}/ad/${id}`;
     const pageTitle = `${title} - ALINAFE`;
 
     const html = `<!doctype html>
@@ -97,6 +109,7 @@ if (!isCrawler) {
     <meta property="og:image" content="${escapeHtml(imageUrl)}" />
     <meta property="og:url" content="${escapeHtml(pageUrl)}" />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Alinafe" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="${escapeHtml(pageTitle)}" />
@@ -110,6 +123,7 @@ if (!isCrawler) {
 </html>`;
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
+    // Keep cache short for fast updates (WhatsApp caches aggressively)
     res.setHeader("Cache-Control", "public, max-age=60");
     return res.status(200).send(html);
   } catch (error) {
