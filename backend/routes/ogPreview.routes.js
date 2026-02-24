@@ -34,10 +34,18 @@ const buildCompactLocation = (ad) => {
 };
 
 router.get("/ad/:id", async (req, res, next) => {
+  const { id } = req.params;
   const userAgent = req.get("user-agent") || "";
   const isCrawler = CRAWLER_REGEX.test(userAgent);
 
-  if (!isCrawler) return next();
+  if (!isCrawler) {
+    const APP_BASE = trimSlashes(
+      process.env.APP_BASE_URL ||
+        process.env.FRONTEND_BASE_URL ||
+        "http://localhost:5173"
+    );
+    return res.redirect(302, `${APP_BASE}/ad/${id}`);
+  }
 
   const FRONTEND_BASE_URL =
     process.env.APP_BASE_URL ||
@@ -45,7 +53,6 @@ router.get("/ad/:id", async (req, res, next) => {
     "https://alinafe.in";
   const APP_BASE = trimSlashes(FRONTEND_BASE_URL);
 
-  const { id } = req.params;
   if (!mongoose.Types.ObjectId.isValid(id)) {
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     return res.status(400).send("<!doctype html><html><body>Invalid ad id</body></html>");
@@ -114,4 +121,3 @@ router.get("/ad/:id", async (req, res, next) => {
 });
 
 export default router;
-
