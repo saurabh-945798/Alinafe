@@ -44,9 +44,9 @@ router.get("/ad/:id", async (req, res, next) => {
       : "http://localhost:5173"
   );
 
-  if (!isCrawler) {
-    return res.redirect(302, `${FRONTEND_BASE}/ad/${id}`);
-  }
+if (!isCrawler) {
+  return next();
+}
 
   const FRONTEND_BASE_URL =
     process.env.APP_BASE_URL ||
