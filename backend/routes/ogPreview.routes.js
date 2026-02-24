@@ -38,13 +38,14 @@ router.get("/ad/:id", async (req, res, next) => {
   const userAgent = req.get("user-agent") || "";
   const isCrawler = CRAWLER_REGEX.test(userAgent);
 
+  const FRONTEND_BASE = trimSlashes(
+    process.env.NODE_ENV === "production"
+      ? process.env.FRONTEND_URL || "https://alinafe.in"
+      : "http://localhost:5173"
+  );
+
   if (!isCrawler) {
-    const APP_BASE = trimSlashes(
-      process.env.APP_BASE_URL ||
-        process.env.FRONTEND_BASE_URL ||
-        "http://localhost:5173"
-    );
-    return res.redirect(302, `${APP_BASE}/ad/${id}`);
+    return res.redirect(302, `${FRONTEND_BASE}/ad/${id}`);
   }
 
   const FRONTEND_BASE_URL =
