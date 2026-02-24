@@ -1,4 +1,4 @@
-// src/pages/ProductDetails/ProductDetails.jsx
+﻿// src/pages/ProductDetails/ProductDetails.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import api from "../../api/axios";
@@ -105,7 +105,7 @@ const ProductDetails = () => {
 
 
 
-  /* 🧩 Fetch Seller Stats */
+  /* ðŸ§© Fetch Seller Stats */
 useEffect(() => {
   if (!ad?.ownerUid) return;
 
@@ -163,7 +163,7 @@ useEffect(() => {
 
         const ads = Array.isArray(json?.ads) ? json.ads : [];
 
-        // ❗ SAME AD REMOVE
+        // â— SAME AD REMOVE
         const filtered = ads.filter((a) => a._id !== ad._id);
 
         setRelated(filtered);
@@ -184,7 +184,7 @@ useEffect(() => {
     }
 
     try {
-      // ✅ PROTECTED API → api (interceptor)
+      // âœ… PROTECTED API â†’ api (interceptor)
       const res = await api.put("/favorites/toggle", {
         adId: ad._id,
       });
@@ -193,7 +193,7 @@ useEffect(() => {
 
       Swal.fire({
         icon: res.data.status ? "success" : "info",
-        title: res.data.status ? "Added to Favorites ❤️" : "Removed 💔",
+        title: res.data.status ? "Added to Favorites â¤ï¸" : "Removed ðŸ’”",
         showConfirmButton: false,
         timer: 1500,
       });
@@ -228,22 +228,22 @@ useEffect(() => {
         senderId: user.uid,
         receiverId: ad.ownerUid,
 
-        // ✅ sender (buyer)
+        // âœ… sender (buyer)
         senderName: user.displayName || user.email.split("@")[0],
         senderEmail: user.email,
         senderPhoto: user.photoURL || null,
 
-        // ✅ receiver (seller)
+        // âœ… receiver (seller)
         receiverName: ad.ownerName,
         receiverPhoto: ad.ownerImage || null,
 
-        // ✅ AD CONTEXT (FOR CHAT HEADER)
+        // âœ… AD CONTEXT (FOR CHAT HEADER)
         adId: ad._id,
         productTitle: ad.title,
         productImage: ad.images?.[0] || "",
 
-        // ✅ DEFAULT MESSAGE
-        message: "Hi, I’m interested in this ad.",
+        // âœ… DEFAULT MESSAGE
+        message: "Hi, Iâ€™m interested in this ad.",
       });
 
       const convoId = res.data?.conversationId || res.data?._id;
@@ -366,28 +366,38 @@ useEffect(() => {
 
   const buildWhatsAppMessage = () => {
     const lines = [
-      "🟨 ALINAFE Marketplace",
+      "\u{1F7E8} ALINAFE Marketplace",
       "",
-      "Hello 👋",
+      "Hello \u{1F44B}",
       "",
-      "I’m interested in your listing on ALINAFE:",
+      "I\u2019m interested in your listing on ALINAFE:",
       "",
     ];
 
     if (ad?.title) {
-      lines.push(`📦 Product: ${ad.title}`);
+      lines.push(`\u{1F4E6} Product: ${ad.title}`);
     }
 
     if (ad?.price !== undefined && ad?.price !== null && ad?.price !== "") {
-      lines.push(`💰 Price: ₹ ${Number(ad.price).toLocaleString("en-IN")}`);
+      lines.push(
+        `\u{1F4B0} Price: \u20B9 ${Number(ad.price).toLocaleString("en-IN")}`
+      );
     }
 
-    const currentUrl = typeof window !== "undefined" ? window.location.href : "";
-    if (currentUrl) {
-      lines.push("", "🔗 View Ad:", currentUrl);
+    const shareBase = (
+      import.meta.env.VITE_APP_BASE_URL || "https://alinafe.in"
+    ).replace(/\/+$/, "");
+    const shareUrl = ad?._id ? `${shareBase}/og/ad/${ad._id}?v=${Date.now()}` : "";
+    if (shareUrl) {
+      lines.push("", "\u{1F517} View Ad:", shareUrl);
     }
 
-    lines.push("", "Is this item still available?", "", "— Sent via ALINAFE Marketplace");
+    lines.push(
+      "",
+      "Is this item still available?",
+      "",
+      "\u2014 Sent via ALINAFE Marketplace"
+    );
     return lines.join("\n");
   };
 
@@ -411,7 +421,7 @@ useEffect(() => {
         Product not found.
       </div>
     );
-  // ✅ COMBINED MEDIA LIST (IMAGES + VIDEO)
+  // âœ… COMBINED MEDIA LIST (IMAGES + VIDEO)
   const mediaList = [
     ...(ad?.images || []).map((img) => ({
       type: "image",
@@ -489,7 +499,7 @@ useEffect(() => {
 
   return (
     <section className="min-h-screen bg-gradient-to-br from-white to-[#E6FFFD] px-4 sm:px-10 pt-28 pb-32 font-[Poppins]">
-      {/* 🔙 Back */}
+      {/* ðŸ”™ Back */}
       <motion.button
         onClick={() => {
           if (fromChat) {
@@ -511,7 +521,7 @@ useEffect(() => {
       {/* Main Content */}
       <div className="grid lg:grid-cols-2 gap-12">
         {/* LEFT: Gallery */}
-        {/* 🖼️ MAIN PRODUCT IMAGE + THUMBNAILS SECTION */}
+        {/* ðŸ–¼ï¸ MAIN PRODUCT IMAGE + THUMBNAILS SECTION */}
         <div className="bg-white rounded-3xl shadow-md p-6">
           {/* MAIN BIG IMAGE */}
           <div className="relative w-full aspect-video sm:h-[480px] rounded-2xl overflow-hidden bg-black">
@@ -534,7 +544,7 @@ useEffect(() => {
 
           {/* THUMBNAILS */}
           <div className="flex gap-3 mt-5 overflow-x-auto scrollbar-hide">
-            {/* 🎥 VIDEO THUMBNAIL */}
+            {/* ðŸŽ¥ VIDEO THUMBNAIL */}
             {ad.video?.url && (
               <div
                 onClick={() => {
@@ -552,7 +562,7 @@ useEffect(() => {
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                  <span className="text-white text-xl">▶</span>
+                  <span className="text-white text-xl">â–¶</span>
                 </div>
               </div>
             )}
@@ -605,7 +615,7 @@ useEffect(() => {
               }}
               className="absolute left-5 text-white text-4xl p-3 rounded-full bg-black/40 hover:bg-black/60 transition"
             >
-              ❮
+              â®
             </button>
 
             {/* FULL IMAGE */}
@@ -637,7 +647,7 @@ useEffect(() => {
               }}
               className="absolute right-5 text-white text-4xl p-3 rounded-full bg-black/40 hover:bg-black/60 transition"
             >
-              ❯
+              â¯
             </button>
 
             {/* CLOSE BUTTON */}
@@ -645,14 +655,14 @@ useEffect(() => {
               onClick={() => setShowFullImage(false)}
               className="absolute top-5 right-5 bg-white text-black p-2 rounded-full shadow-md hover:bg-gray-200 transition"
             >
-              ✕
+              âœ•
             </button>
           </div>
         )}
 
         {/* RIGHT: Info */}
         <div className="bg-white rounded-3xl shadow-md p-8">
-          {/* 🏷️ Product Title & Price Section */}
+          {/* ðŸ·ï¸ Product Title & Price Section */}
           <div className="bg-gradient-to-br from-white via-[#FAFEFE] to-[#F1FBFB] rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] mb-6 transition-all duration-300 hover:shadow-[0_6px_25px_rgba(0,0,0,0.08)]">
             {/* Product Title */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
@@ -663,12 +673,12 @@ useEffect(() => {
               {/* Optional Featured or Verified Badge */}
               {ad.isFeatured && (
                 <span className="inline-flex items-center gap-1 px-3 py-1 text-sm font-semibold bg-[#0E9F9F]/10 text-[#0E9F9F] rounded-full shadow-sm">
-                  ⭐ Featured
+                  â­ Featured
                 </span>
               )}
               {ad.isVerified && !ad.isFeatured && (
                 <span className="inline-flex items-center gap-1 px-3 py-1 text-sm font-semibold bg-green-50 text-green-700 border border-green-200 rounded-full shadow-sm">
-                  ✅ Verified
+                  âœ… Verified
                 </span>
               )}
             </div>
@@ -707,7 +717,7 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* ❤️ Favorite Button Section */}
+          {/* â¤ï¸ Favorite Button Section */}
           <div className="flex items-center gap-4 mb-6">
             <motion.button
               whileTap={{ scale: 0.95 }}
@@ -743,7 +753,7 @@ useEffect(() => {
           </div>
 
           {renderCategoryFields()}
-          {/* 📝 Description Section */}
+          {/* ðŸ“ Description Section */}
           <div className="mt-8 bg-gradient-to-br from-white via-[#FAFEFE] to-[#F3FBFB] border border-[#0E9F9F]/10 rounded-2xl shadow-[0_3px_10px_rgba(0,0,0,0.03)] p-6 transition-all duration-300 hover:shadow-[0_6px_20px_rgba(0,0,0,0.05)]">
             <h2 className="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
               <svg
@@ -776,7 +786,7 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* 📍 Product Meta Info */}
+          {/* ðŸ“ Product Meta Info */}
           <div className="flex flex-wrap gap-6 text-sm text-gray-600 mt-6">
             <span className="flex items-center gap-1.5 hover:text-[#0E9F9F] transition-colors duration-200">
               <MapPin size={16} className="text-[#0E9F9F]" />
@@ -794,9 +804,9 @@ useEffect(() => {
             </span>
           </div>
 
-          {/* 🧩 Seller Information Section */}
-          {/* 🧩 Seller Information Section */}
-          {/* 🧩 Seller Information Section */}
+          {/* ðŸ§© Seller Information Section */}
+          {/* ðŸ§© Seller Information Section */}
+          {/* ðŸ§© Seller Information Section */}
 <motion.div
   initial={{ opacity: 0, y: 30 }}
   whileInView={{ opacity: 1, y: 0 }}
@@ -919,11 +929,11 @@ useEffect(() => {
         }}
         className="text-sm font-medium text-[#0E9F9F] hover:underline"
       >
-        Request a call back →
+        Request a call back â†’
       </button>
     </div>
 
-    {/* 🔽 SELLER TRUST STATS */}
+    {/* ðŸ”½ SELLER TRUST STATS */}
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-100">
       {/* MEMBER SINCE */}
       <div className="flex items-center gap-3 bg-[#F0FAF9] p-4 rounded-xl">
@@ -936,7 +946,7 @@ useEffect(() => {
                   month: "short",
                   year: "numeric",
                 })
-              : "—"}
+              : "â€”"}
           </p>
         </div>
       </div>
@@ -947,12 +957,12 @@ useEffect(() => {
         <div>
           <p className="text-xs text-gray-500">Total ads posted</p>
           <p className="font-semibold text-gray-800">
-            {sellerStats?.totalAds ?? "—"} Ads
+            {sellerStats?.totalAds ?? "â€”"} Ads
           </p>
 
           {sellerStats?.isTrustedSeller && (
             <span className="inline-block mt-1 text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
-              ✔ Trusted Seller
+              âœ” Trusted Seller
             </span>
           )}
         </div>
@@ -962,14 +972,14 @@ useEffect(() => {
     {/* VERIFIED HINT */}
     {sellerStats?.totalAds >= 5 && (
       <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
-        ✅ Verified active seller
+        âœ… Verified active seller
       </div>
     )}
   </div>
 </motion.div>
 
 
-          {/* ⚠️ Report Ad Button */}
+          {/* âš ï¸ Report Ad Button */}
           <motion.button
             whileTap={{ scale: 0.95 }}
             whileHover={{ y: -2 }}
@@ -991,7 +1001,7 @@ useEffect(() => {
               transition={{ repeat: Infinity, duration: 2 }}
               className="text-lg"
             >
-              🚫
+              ðŸš«
             </motion.span>
             Report this Ad
           </motion.button>
@@ -999,7 +1009,7 @@ useEffect(() => {
       </div>
 
       {/* Safety Tips */}
-      {/* 🌟 Safety Tips Section */}
+      {/* ðŸŒŸ Safety Tips Section */}
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -1056,7 +1066,7 @@ useEffect(() => {
               className="flex items-start gap-3 bg-white/70 p-3 rounded-xl hover:bg-[#0E9F9F]/5 transition-all duration-200"
             >
               <div className="mt-1 flex-shrink-0 w-5 h-5 bg-[#0E9F9F] text-white flex items-center justify-center rounded-full text-sm font-bold shadow-sm">
-                ✓
+                âœ“
               </div>
               <span>{tip}</span>
             </motion.li>
@@ -1064,9 +1074,9 @@ useEffect(() => {
         </ul>
       </motion.div>
 
-      {/* 💫 Related Products Section */}
-      {/* 💫 Related Products Section */}
-      {/* 💫 Related Products Section */}
+      {/* ðŸ’« Related Products Section */}
+      {/* ðŸ’« Related Products Section */}
+      {/* ðŸ’« Related Products Section */}
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -1086,7 +1096,7 @@ useEffect(() => {
             }
             className="text-[#0E9F9F] text-sm font-medium hover:underline"
           >
-            View all →
+            View all â†’
           </button>
         </div>
 
@@ -1129,7 +1139,7 @@ useEffect(() => {
                     {item.title}
                   </h3>
 
-                  {/* 🔥 DESCRIPTION (NEW) */}
+                  {/* ðŸ”¥ DESCRIPTION (NEW) */}
                   <p className="text-sm text-gray-600 mt-1 line-clamp-2">
                     {item.description || "No description available"}
                   </p>
@@ -1218,21 +1228,21 @@ useEffect(() => {
               <button
                 onClick={async () => {
                   try {
-                    const finalMessage = `📞 Request Call Back\n\nName: ${callbackForm.name}\nPhone: ${callbackForm.phone}\n\nMessage: ${callbackForm.message}`;
+                    const finalMessage = `ðŸ“ž Request Call Back\n\nName: ${callbackForm.name}\nPhone: ${callbackForm.phone}\n\nMessage: ${callbackForm.message}`;
                     const res = await api.post("/messages", {
                       senderId: user.uid,
                       receiverId: ad.ownerUid,
 
-                      // ✅ buyer
+                      // âœ… buyer
                       senderName: user.displayName || user.email.split("@")[0],
                       senderEmail: user.email,
                       senderPhoto: user.photoURL || null,
 
-                      // ✅ seller
+                      // âœ… seller
                       receiverName: ad.ownerName,
                       receiverPhoto: ad.ownerImage || null,
 
-                      // ✅ AD CONTEXT (IMPORTANT)
+                      // âœ… AD CONTEXT (IMPORTANT)
                       adId: ad._id,
                       productTitle: ad.title,
                       productImage: ad.images?.[0] || "",
@@ -1335,3 +1345,5 @@ useEffect(() => {
 };
 
 export default ProductDetails;
+
+
