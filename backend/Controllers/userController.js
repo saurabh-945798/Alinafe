@@ -4,6 +4,7 @@ import axios from "axios";
 import streamifier from "streamifier";
 import bcrypt from "bcrypt";
 import { EmailService } from "../Services/email.service.js";
+import { formatIndianPhone } from "../utils/formatIndianPhone.js";
 
 const LOGIN_EMAIL_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const EMAIL_OTP_TTL_MS = 10 * 60 * 1000;
@@ -29,22 +30,35 @@ const canSendLoginEmail = (lastLoginNotifiedAt) => {
 };
 
 const isStrongPassword = (password = "") => /^(?=.*[A-Z])(?=.*\d).{8,}$/.test(password);
-const normalizePhone = (value = "") => String(value).replace(/\D/g, "");
+const toDigitsOnly = (value = "") => String(value).replace(/\D/g, "");
+const tryFormatIndianPhone = (value = "") => {
+  try {
+    return formatIndianPhone(value);
+  } catch {
+    return "";
+  }
+};
 const buildPhoneCandidates = (value = "") => {
-  const digits = normalizePhone(value);
-  if (!digits) return [];
-  const set = new Set([digits]);
-  if (digits.startsWith("0") && digits.length > 1) {
-    set.add(digits.slice(1));
+  const raw = String(value || "").trim();
+  if (!raw) return [];
+
+  const digits = toDigitsOnly(raw);
+  const set = new Set();
+
+  const formatted = tryFormatIndianPhone(raw);
+  if (formatted) {
+    set.add(formatted); // canonical
+    const local10 = formatted.slice(3);
+    set.add(local10); // legacy values if older docs were stored without +91
+    set.add(`0${local10}`); // legacy 0XXXXXXXXXX format
+    set.add(`91${local10}`); // legacy 91XXXXXXXXXX format
+  } else if (digits) {
+    // keep fallback for old records with inconsistent data
+    set.add(digits);
+    if (digits.startsWith("0") && digits.length > 1) set.add(digits.slice(1));
+    if (!digits.startsWith("0")) set.add(`0${digits}`);
   }
-  if (!digits.startsWith("0")) {
-    set.add(`0${digits}`);
-  }
-  if (digits.startsWith("91") && digits.length > 10) {
-    const withoutCountry = digits.slice(2);
-    set.add(withoutCountry);
-    set.add(`0${withoutCountry}`);
-  }
+
   return Array.from(set);
 };
 
@@ -80,7 +94,18 @@ export const registerUser = async (req, res) => {
     const email = firebaseUser.email;
     const nameFromBody = req.body?.name;
     const photoURLFromBody = req.body?.photoURL;
-    const contactNumberFromBody = normalizePhone(req.body?.contactNumber || req.body?.phone || "");
+    const rawPhone = req.body?.contactNumber || req.body?.phone || "";
+    let contactNumberFromBody = "";
+    if (String(rawPhone || "").trim()) {
+      try {
+        contactNumberFromBody = formatIndianPhone(rawPhone);
+      } catch {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Indian mobile number",
+        });
+      }
+    }
     const categoryFromBody = String(req.body?.category || "").trim();
     const fallbackName =
       nameFromBody || firebaseUser.name || email.split("@")[0] || "User";
@@ -147,7 +172,7 @@ export const registerUser = async (req, res) => {
         user.contactNumber = contactNumberFromBody;
       }
       if (!user.contactNumber && user.phone) {
-        user.contactNumber = normalizePhone(user.phone);
+        user.contactNumber = tryFormatIndianPhone(user.phone);
       }
       if (categoryFromBody) {
         user.category = categoryFromBody;
@@ -184,6 +209,21 @@ export const registerUser = async (req, res) => {
       user,
     });
   } catch (error) {
+    if (error?.code === 11000 && error?.keyPattern?.phone) {
+      return res.status(409).json({
+        success: false,
+        message: "Phone number already exists",
+      });
+    }
+    if (
+      error?.name === "ValidationError" &&
+      (error?.errors?.phone || error?.errors?.contactNumber)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Indian mobile number",
+      });
+    }
     console.error("Error syncing user:", error);
     return res.status(500).json({
       success: false,
@@ -306,9 +346,18 @@ export const updateUserProfile = async (req, res) => {
     }
 
     user.name = name || user.name;
-    user.phone = phone || user.phone;
-    if (phone) {
-      user.contactNumber = normalizePhone(phone);
+    if (typeof phone === "string" && phone.trim()) {
+      let normalizedPhone = "";
+      try {
+        normalizedPhone = formatIndianPhone(phone);
+      } catch {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Indian mobile number",
+        });
+      }
+      user.phone = normalizedPhone;
+      user.contactNumber = normalizedPhone;
     }
     user.location = location || user.location;
     user.lastLogin = new Date();
@@ -321,6 +370,21 @@ export const updateUserProfile = async (req, res) => {
       user: updatedUser,
     });
   } catch (error) {
+    if (error?.code === 11000 && error?.keyPattern?.phone) {
+      return res.status(409).json({
+        success: false,
+        message: "Phone number already exists",
+      });
+    }
+    if (
+      error?.name === "ValidationError" &&
+      (error?.errors?.phone || error?.errors?.contactNumber)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Indian mobile number",
+      });
+    }
     console.error("Error updating user:", error);
     return res.status(500).json({ message: "Server error" });
   }

@@ -4,28 +4,20 @@ import jwt from "jsonwebtoken";
 import PhoneOtp from "../models/PhoneOtp.js";
 import User from "../models/User.js";
 import { SmsService } from "../Services/sms.service.js";
+import { formatIndianPhone } from "../utils/formatIndianPhone.js";
 
 const OTP_TTL_MINUTES = 5;
 const MAX_ATTEMPTS = 5;
 
 const normalizePhone = (raw = "") => {
-  const trimmed = String(raw).trim().replace(/\s+/g, "");
-
-  if (!trimmed) return "";
-
-  if (trimmed.startsWith("+")) {
-    return trimmed;
+  try {
+    return formatIndianPhone(raw);
+  } catch {
+    return "";
   }
-
-  // If 10 digits, assume India and add +91
-  if (/^\d{10}$/.test(trimmed)) {
-    return `+91${trimmed}`;
-  }
-
-  return trimmed;
 };
 
-const isValidPhone = (phone) => /^\+\d{8,15}$/.test(phone);
+const isValidPhone = (phone) => /^\+91[0-9]{10}$/.test(phone);
 
 const hashOtp = (otp) =>
   crypto.createHash("sha256").update(String(otp)).digest("hex");

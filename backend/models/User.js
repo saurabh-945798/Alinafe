@@ -10,8 +10,28 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     photoURL: { type: String, default: "" },
-    phone: { type: String, default: "" },
-    contactNumber: { type: String, default: "", index: true },
+    phone: {
+      type: String,
+      default: "",
+      trim: true,
+      index: true,
+      validate: {
+        validator: (value) =>
+          !value || /^\+91[0-9]{10}$/.test(String(value).trim()),
+        message: "Invalid Indian mobile number",
+      },
+    },
+    contactNumber: {
+      type: String,
+      default: "",
+      trim: true,
+      index: true,
+      validate: {
+        validator: (value) =>
+          !value || /^\+91[0-9]{10}$/.test(String(value).trim()),
+        message: "Invalid Indian mobile number",
+      },
+    },
     category: { type: String, default: "" },
 
     // --- Location Info (For Analytics + Nearby Ads) ---
@@ -59,6 +79,15 @@ const userSchema = new mongoose.Schema(
     ],
   },
   { timestamps: true }
+);
+
+// Keep unique constraint only for real phone values and avoid collisions on empty strings.
+userSchema.index(
+  { phone: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { phone: { $regex: /^\+91[0-9]{10}$/ } },
+  }
 );
 
 const User = mongoose.model("User", userSchema);
