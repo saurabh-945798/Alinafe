@@ -12,6 +12,12 @@ import {
   Heart,
   Eye,
   ArrowLeft,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Play,
+  X,
+  Star,
   CheckCircle2,
   ShieldCheck,
   MessageSquare,
@@ -193,7 +199,9 @@ useEffect(() => {
 
       Swal.fire({
         icon: res.data.status ? "success" : "info",
-        title: res.data.status ? "Added to Favorites â¤ï¸" : "Removed ðŸ’”",
+        title: res.data.status
+          ? "Added to Favorites"
+          : "Removed from Favorites",
         showConfirmButton: false,
         timer: 1500,
       });
@@ -243,7 +251,7 @@ useEffect(() => {
         productImage: ad.images?.[0] || "",
 
         // âœ… DEFAULT MESSAGE
-        message: "Hi, Iâ€™m interested in this ad.",
+        message: "Hi, I'm interested in this ad.",
       });
 
       const convoId = res.data?.conversationId || res.data?._id;
@@ -365,39 +373,23 @@ useEffect(() => {
   const isWhatsAppAvailable = Boolean(whatsappNumber);
 
   const buildWhatsAppMessage = () => {
-    const lines = [
-      "\u{1F7E8} ALINAFE Marketplace",
-      "",
-      "Hello \u{1F44B}",
-      "",
-      "I\u2019m interested in your listing on ALINAFE:",
-      "",
-    ];
-
-    if (ad?.title) {
-      lines.push(`\u{1F4E6} Product: ${ad.title}`);
-    }
-
-    if (ad?.price !== undefined && ad?.price !== null && ad?.price !== "") {
-      lines.push(
-        `\u{1F4B0} Price: \u20B9 ${Number(ad.price).toLocaleString("en-IN")}`
-      );
-    }
-
     const shareBase = (
       import.meta.env.VITE_APP_BASE_URL || "https://alinafe.in"
     ).replace(/\/+$/, "");
-    const shareUrl = ad?._id ? `${shareBase}/og/ad/${ad._id}?v=${Date.now()}` : "";
-    if (shareUrl) {
-      lines.push("", "\u{1F517} View Ad:", shareUrl);
-    }
+    const shareUrl = ad?._id
+      ? `${shareBase}/og/ad/${ad._id}?v=${Date.now()}`
+      : "";
 
-    lines.push(
+    const lines = [
+      "Hello",
       "",
-      "Is this item still available?",
+      "I\u2019m interested",
       "",
-      "\u2014 Sent via ALINAFE Marketplace"
-    );
+      shareUrl || "",
+      "",
+      "ALINAFE Marketplace",
+    ].filter(Boolean);
+
     return lines.join("\n");
   };
 
@@ -562,7 +554,7 @@ useEffect(() => {
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                  <span className="text-white text-xl">â–¶</span>
+                  <Play className="text-white" size={20} fill="currentColor" />
                 </div>
               </div>
             )}
@@ -615,7 +607,7 @@ useEffect(() => {
               }}
               className="absolute left-5 text-white text-4xl p-3 rounded-full bg-black/40 hover:bg-black/60 transition"
             >
-              â®
+              <ChevronLeft size={28} />
             </button>
 
             {/* FULL IMAGE */}
@@ -647,7 +639,7 @@ useEffect(() => {
               }}
               className="absolute right-5 text-white text-4xl p-3 rounded-full bg-black/40 hover:bg-black/60 transition"
             >
-              â¯
+              <ChevronRight size={28} />
             </button>
 
             {/* CLOSE BUTTON */}
@@ -655,7 +647,7 @@ useEffect(() => {
               onClick={() => setShowFullImage(false)}
               className="absolute top-5 right-5 bg-white text-black p-2 rounded-full shadow-md hover:bg-gray-200 transition"
             >
-              âœ•
+              <X size={20} />
             </button>
           </div>
         )}
@@ -673,12 +665,14 @@ useEffect(() => {
               {/* Optional Featured or Verified Badge */}
               {ad.isFeatured && (
                 <span className="inline-flex items-center gap-1 px-3 py-1 text-sm font-semibold bg-[#0E9F9F]/10 text-[#0E9F9F] rounded-full shadow-sm">
-                  â­ Featured
+                  <Star size={14} fill="currentColor" />
+                  Featured
                 </span>
               )}
               {ad.isVerified && !ad.isFeatured && (
                 <span className="inline-flex items-center gap-1 px-3 py-1 text-sm font-semibold bg-green-50 text-green-700 border border-green-200 rounded-full shadow-sm">
-                  âœ… Verified
+                  <CheckCircle2 size={14} />
+                  Verified
                 </span>
               )}
             </div>
@@ -873,7 +867,7 @@ useEffect(() => {
             }`}
           >
             <MessageCircle size={18} />
-            Chat on WhatsApp
+          WhatsApp
           </button>
 
           <button
@@ -887,11 +881,7 @@ useEffect(() => {
           </button>
         </div>
 
-        <p className="text-xs text-gray-500">
-          {isWhatsAppAvailable
-            ? "Fastest response on WhatsApp"
-            : "Seller WhatsApp not available"}
-        </p>
+         
       </div>
     </div>
 
@@ -929,7 +919,7 @@ useEffect(() => {
         }}
         className="text-sm font-medium text-[#0E9F9F] hover:underline"
       >
-        Request a call back â†’
+      Request a call back →
       </button>
     </div>
 
@@ -941,12 +931,12 @@ useEffect(() => {
         <div>
           <p className="text-xs text-gray-500">Member since</p>
           <p className="font-semibold text-gray-800">
-            {sellerStats
-              ? new Date(sellerStats.joinedAt).toLocaleDateString("en-US", {
-                  month: "short",
-                  year: "numeric",
-                })
-              : "â€”"}
+              {sellerStats
+                ? new Date(sellerStats.joinedAt).toLocaleDateString("en-US", {
+                    month: "short",
+                    year: "numeric",
+                  })
+                : "-"}
           </p>
         </div>
       </div>
@@ -957,12 +947,12 @@ useEffect(() => {
         <div>
           <p className="text-xs text-gray-500">Total ads posted</p>
           <p className="font-semibold text-gray-800">
-            {sellerStats?.totalAds ?? "â€”"} Ads
+            {sellerStats?.totalAds ?? "-"} Ads
           </p>
 
           {sellerStats?.isTrustedSeller && (
             <span className="inline-block mt-1 text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
-              âœ” Trusted Seller
+            ✔ Trusted Seller
             </span>
           )}
         </div>
@@ -970,11 +960,12 @@ useEffect(() => {
     </div>
 
     {/* VERIFIED HINT */}
-    {sellerStats?.totalAds >= 5 && (
-      <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
-        âœ… Verified active seller
-      </div>
-    )}
+          {sellerStats?.totalAds >= 5 && (
+            <div className="flex items-center gap-2 text-sm text-green-600 font-medium">
+              <CheckCircle2 size={16} />
+              Verified active seller
+            </div>
+          )}
   </div>
 </motion.div>
 
@@ -1001,7 +992,7 @@ useEffect(() => {
               transition={{ repeat: Infinity, duration: 2 }}
               className="text-lg"
             >
-              ðŸš«
+              🚫
             </motion.span>
             Report this Ad
           </motion.button>
@@ -1066,7 +1057,7 @@ useEffect(() => {
               className="flex items-start gap-3 bg-white/70 p-3 rounded-xl hover:bg-[#0E9F9F]/5 transition-all duration-200"
             >
               <div className="mt-1 flex-shrink-0 w-5 h-5 bg-[#0E9F9F] text-white flex items-center justify-center rounded-full text-sm font-bold shadow-sm">
-                âœ“
+                ✓
               </div>
               <span>{tip}</span>
             </motion.li>
@@ -1096,7 +1087,9 @@ useEffect(() => {
             }
             className="text-[#0E9F9F] text-sm font-medium hover:underline"
           >
-            View all â†’
+            <span className="inline-flex items-center gap-1">
+              View all <ArrowRight size={14} />
+            </span>
           </button>
         </div>
 
@@ -1228,7 +1221,7 @@ useEffect(() => {
               <button
                 onClick={async () => {
                   try {
-                    const finalMessage = `ðŸ“ž Request Call Back\n\nName: ${callbackForm.name}\nPhone: ${callbackForm.phone}\n\nMessage: ${callbackForm.message}`;
+                    const finalMessage = `Request Call Back\n\nName: ${callbackForm.name}\nPhone: ${callbackForm.phone}\n\nMessage: ${callbackForm.message}`;
                     const res = await api.post("/messages", {
                       senderId: user.uid,
                       receiverId: ad.ownerUid,
