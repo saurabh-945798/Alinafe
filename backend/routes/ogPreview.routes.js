@@ -4,6 +4,9 @@ import Ad from "../models/Ad.js";
 
 const router = express.Router();
 
+const CRAWLER_REGEX =
+  /(facebookexternalhit|whatsapp|twitterbot|linkedinbot|telegrambot|slackbot)/i;
+
 const escapeHtml = (value = "") =>
   String(value)
     .replace(/&/g, "&amp;")
@@ -12,7 +15,7 @@ const escapeHtml = (value = "") =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
-const trimSlashes = (v = "") => String(v).replace(/\/+$/, "");
+const trimSlashes = (value = "") => String(value).replace(/\/+$/, "");
 
 const toAbsoluteUrl = (rawUrl, baseUrl) => {
   const normalizedBase = trimSlashes(baseUrl);
@@ -30,18 +33,19 @@ const buildCompactLocation = (ad) => {
   return [...new Set(parts)].join(", ");
 };
 
-/**
- * OG Preview Route
- * URL: https://alinafe.in/og/ad/<AD_ID>
- */
 router.get("/og/ad/:id", async (req, res) => {
   const { id } = req.params;
 
-  const SITE_BASE = trimSlashes(
-    process.env.APP_BASE_URL ||
-      process.env.FRONTEND_URL ||
-      "https://alinafe.in"
+  const siteBase = trimSlashes(
+    process.env.APP_BASE_URL || process.env.FRONTEND_URL || "https://alinafe.in"
   );
+  const pageUrl = `${siteBase}/ad/${id}`;
+  const userAgent = String(req.headers["user-agent"] || "");
+  const isCrawler = CRAWLER_REGEX.test(userAgent);
+
+  if (!isCrawler) {
+    return res.redirect(302, pageUrl);
+  }
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(400).send("Invalid ad id");
@@ -56,28 +60,21 @@ router.get("/og/ad/:id", async (req, res) => {
       return res.status(404).send("Ad not found");
     }
 
-    const title = (ad?.title || "Listing").trim();
-
+    const title = String(ad?.title || "Listing").trim();
     const priceText =
       ad?.price !== undefined && ad?.price !== null && ad?.price !== ""
-        ? `₹ ${Number(ad.price).toLocaleString("en-IN")}`
+        ? `\u20B9 ${Number(ad.price).toLocaleString("en-IN")}`
         : "";
 
     const locationText = buildCompactLocation(ad);
-    const description = [priceText, locationText]
-      .filter(Boolean)
-      .join(" | ");
+    const description = [priceText, locationText].filter(Boolean).join(" | ");
 
     const firstImage = Array.isArray(ad?.images) ? ad.images[0] : "";
-    const fallbackImage = `${SITE_BASE}/logo.png`;
-    const imageUrl =
-      toAbsoluteUrl(firstImage, SITE_BASE) || fallbackImage;
+    const fallbackImage = `${siteBase}/logo.png`;
+    const imageUrl = toAbsoluteUrl(firstImage, siteBase) || fallbackImage;
 
-    const pageUrl = `${SITE_BASE}/ad/${id}`;
     const pageTitle = `${title} - ALINAFE`;
-
-    const html = `
-<!doctype html>
+    const html = `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />
@@ -92,16 +89,12 @@ router.get("/og/ad/:id", async (req, res) => {
 <meta name="twitter:description" content="${escapeHtml(description)}" />
 <meta name="twitter:image" content="${escapeHtml(imageUrl)}" />
 </head>
-<body>
-Preview
-</body>
-</html>
-`;
+<body>Preview</body>
+</html>`;
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("Cache-Control", "public, max-age=60");
     return res.status(200).send(html);
-
   } catch (error) {
     console.error("og_preview_error:", error);
     return res.status(500).send("Preview unavailable");
