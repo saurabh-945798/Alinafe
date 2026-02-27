@@ -1560,39 +1560,39 @@
 
 
 // // scripts/updatePhone.js
-// import mongoose from "mongoose";
-// import dotenv from "dotenv";
-// import Ad from "./models/Ad.js"; // apna correct model path check kar lena
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import Ad from "./models/Ad.js"; // apna correct model path check kar lena
 
-// dotenv.config();
+dotenv.config();
 
-// const NEW_PHONE = "9876543210"; // yaha apna final number daalo
+const NEW_PHONE = "8920679937"; // yaha apna final number daalo
 
-// const run = async () => {
-//   try {
-//     console.log("Connecting to DB...");
+const run = async () => {
+  try {
+    console.log("Connecting to DB...");
 
-//     await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI);
 
-//     console.log("Connected ✅");
+    console.log("Connected ✅");
 
-//     const result = await Ad.updateMany(
-//       {}, // yaha filter daal sakte ho (ex: { status: "Approved" })
-//       { $set: { ownerPhone: NEW_PHONE } }
-//     );
+    const result = await Ad.updateMany(
+      {}, // yaha filter daal sakte ho (ex: { status: "Approved" })
+      { $set: { ownerPhone: NEW_PHONE } }
+    );
 
-//     console.log("Update Complete 🚀");
-//     console.log("Matched:", result.matchedCount);
-//     console.log("Modified:", result.modifiedCount);
+    console.log("Update Complete 🚀");
+    console.log("Matched:", result.matchedCount);
+    console.log("Modified:", result.modifiedCount);
 
-//     process.exit(0);
-//   } catch (error) {
-//     console.error("Error ❌:", error);
-//     process.exit(1);
-//   }
-// };
+    process.exit(0);
+  } catch (error) {
+    console.error("Error ❌:", error);
+    process.exit(1);
+  }
+};
 
-// run();
+run();
 
 
 // import mongoose from "mongoose";
@@ -1646,74 +1646,74 @@
 // }
 
 // run();
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-import Ad from "./models/Ad.js"; // path check kar lena
+// import mongoose from "mongoose";
+// import dotenv from "dotenv";
+// import Ad from "./models/Ad.js"; // path check kar lena
 
-dotenv.config();
+// dotenv.config();
 
-const formatIndianNumber = (phone) => {
-  if (!phone) return phone;
+// const formatIndianNumber = (phone) => {
+//   if (!phone) return phone;
 
-  let cleaned = phone.toString().replace(/\D/g, "");
+//   let cleaned = phone.toString().replace(/\D/g, "");
 
-  if (cleaned.startsWith("0")) {
-    cleaned = cleaned.slice(1);
-  }
+//   if (cleaned.startsWith("0")) {
+//     cleaned = cleaned.slice(1);
+//   }
 
-  if (cleaned.length === 10) {
-    return "+91" + cleaned;
-  }
+//   if (cleaned.length === 10) {
+//     return "+91" + cleaned;
+//   }
 
-  if (cleaned.startsWith("91") && cleaned.length === 12) {
-    return "+91" + cleaned.slice(2);
-  }
+//   if (cleaned.startsWith("91") && cleaned.length === 12) {
+//     return "+91" + cleaned.slice(2);
+//   }
 
-  return phone;
-};
+//   return phone;
+// };
 
-const run = async () => {
-  try {
-    console.log("Connecting to DB...");
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log("Connected ✅");
+// const run = async () => {
+//   try {
+//     console.log("Connecting to DB...");
+//     await mongoose.connect(process.env.MONGO_URI);
+//     console.log("Connected ✅");
 
-    // 1️⃣ Fetch ads
-    const ads = await Ad.find({
-      ownerPhone: { $exists: true, $ne: null }
-    }).lean();
+//     // 1️⃣ Fetch ads
+//     const ads = await Ad.find({
+//       ownerPhone: { $exists: true, $ne: null }
+//     }).lean();
 
-    console.log("Total Ads Found:", ads.length);
+//     console.log("Total Ads Found:", ads.length);
 
-    const bulkOps = [];
+//     const bulkOps = [];
 
-    // 2️⃣ Prepare bulk operations
-    for (let ad of ads) {
-      const newNumber = formatIndianNumber(ad.ownerPhone);
+//     // 2️⃣ Prepare bulk operations
+//     for (let ad of ads) {
+//       const newNumber = formatIndianNumber(ad.ownerPhone);
 
-      if (newNumber !== ad.ownerPhone) {
-        bulkOps.push({
-          updateOne: {
-            filter: { _id: ad._id },
-            update: { $set: { ownerPhone: newNumber } }
-          }
-        });
-      }
-    }
+//       if (newNumber !== ad.ownerPhone) {
+//         bulkOps.push({
+//           updateOne: {
+//             filter: { _id: ad._id },
+//             update: { $set: { ownerPhone: newNumber } }
+//           }
+//         });
+//       }
+//     }
 
-    // 3️⃣ Execute bulk update
-    if (bulkOps.length > 0) {
-      const result = await Ad.bulkWrite(bulkOps);
-      console.log("Updated Ads:", result.modifiedCount);
-    } else {
-      console.log("No numbers needed update ✅");
-    }
+//     // 3️⃣ Execute bulk update
+//     if (bulkOps.length > 0) {
+//       const result = await Ad.bulkWrite(bulkOps);
+//       console.log("Updated Ads:", result.modifiedCount);
+//     } else {
+//       console.log("No numbers needed update ✅");
+//     }
 
-    process.exit(0);
-  } catch (err) {
-    console.error("Error ❌:", err);
-    process.exit(1);
-  }
-};
+//     process.exit(0);
+//   } catch (err) {
+//     console.error("Error ❌:", err);
+//     process.exit(1);
+//   }
+// };
 
-run();
+// run();

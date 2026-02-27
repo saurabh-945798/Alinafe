@@ -373,21 +373,10 @@ useEffect(() => {
   const isWhatsAppAvailable = Boolean(whatsappNumber);
 
   const buildWhatsAppMessage = () => {
-    const shareBase = (
-      import.meta.env.VITE_APP_BASE_URL || "https://alinafe.in"
-    ).replace(/\/+$/, "");
-    const shareUrl = ad?._id
-      ? `${shareBase}/og/ad/${ad._id}?v=${Date.now()}`
-      : "";
-
     const lines = [
       "Hello",
       "",
       "I\u2019m interested",
-      "",
-      shareUrl || "",
-      "",
-      "ALINAFE Marketplace",
     ].filter(Boolean);
 
     return lines.join("\n");
