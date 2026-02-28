@@ -1566,7 +1566,7 @@ import Ad from "./models/Ad.js"; // apna correct model path check kar lena
 
 dotenv.config();
 
-const NEW_PHONE = "8920679937"; // yaha apna final number daalo
+const NEW_PHONE = "+918920679937"; // yaha apna final number daalo
 
 const run = async () => {
   try {
