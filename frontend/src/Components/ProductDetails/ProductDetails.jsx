@@ -380,17 +380,9 @@ useEffect(() => {
       ? `${shareBase}/og/ad/${ad._id}?v=${Date.now()}`
       : "";
 
-    const lines = [
-      "Hello",
-      "",
-      "I\u2019m interested",
-      "",
-      shareUrl || "",
-      "",
-      
-    ].filter(Boolean);
-
-    return lines.join("\n");
+    return shareUrl
+      ? `Hello I\u2019m interested ${shareUrl}`
+      : "Hello I\u2019m interested";
   };
 
   const handleWhatsAppChat = () => {
@@ -1338,5 +1330,7 @@ useEffect(() => {
 };
 
 export default ProductDetails;
+
+
 
 
