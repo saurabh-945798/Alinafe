@@ -386,6 +386,10 @@ useEffect(() => {
   };
 
   const handleWhatsAppChat = () => {
+    if (!user) {
+      Swal.fire("Login required", "Please login to start WhatsApp chat", "info");
+      return;
+    }
     if (!isWhatsAppAvailable) return;
     const encodedMessage = encodeURIComponent(buildWhatsAppMessage());
     const url = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
@@ -1330,6 +1334,7 @@ useEffect(() => {
 };
 
 export default ProductDetails;
+
 
 
 
