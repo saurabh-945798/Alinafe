@@ -320,33 +320,6 @@ const Navbar = () => {
         )}
       </AnimatePresence>
 
-      {/* ================= BOTTOM MOBILE NAV ================= */}
-      <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t shadow-lg z-50 px-4 py-2">
-        <div className="flex justify-between">
-          <button onClick={() => navigate("/")} className="flex flex-col items-center text-[#0E9F9F]">
-            <Home size={22} />
-            <span className="text-xs">Home</span>
-          </button>
-          <button onClick={() => navigate("/all-ads")} className="flex flex-col items-center">
-            <Layers size={22} />
-            <span className="text-xs">Categories</span>
-          </button>
-          <button
-            onClick={() => navigate("/dashboard/createAd")}
-            className="flex flex-col items-center bg-[#0E9F9F] text-white px-4 py-2 rounded-full -mt-6 shadow-lg"
-          >
-            <PlusCircle size={24} />
-          </button>
-          <button onClick={() => navigate("/chats")} className="flex flex-col items-center">
-            <MessageSquare size={22} />
-            <span className="text-xs">Chat</span>
-          </button>
-          <button onClick={() => navigate(user ? "/dashboard" : "/login")} className="flex flex-col items-center">
-            <User size={22} />
-            <span className="text-xs">Profile</span>
-          </button>
-        </div>
-      </div>
     </>
   );
 };

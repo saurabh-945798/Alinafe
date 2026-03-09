@@ -129,6 +129,8 @@ useEffect(() => {
                         : `${BACKEND_ORIGIN}${ad.images?.[0]}`
                     }
                     alt={ad.title}
+                    loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
                     onError={(e) => {
                       e.target.src =

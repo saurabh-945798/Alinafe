@@ -89,6 +89,8 @@ export default function HeroSlider() {
           <img
             src={slides[index].image}
             alt="slider"
+            loading="eager"
+            decoding="async"
             className="w-full h-full object-cover object-center"
           />
 

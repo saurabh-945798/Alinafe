@@ -32,9 +32,23 @@ const imageStorage = new CloudinaryStorage({
   },
 });
 
+const allowedProfilePhotoMimes = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);
+
+const profilePhotoFileFilter = (req, file, cb) => {
+  if (allowedProfilePhotoMimes.has(file?.mimetype)) {
+    return cb(null, true);
+  }
+  return cb(new Error("Only JPG, JPEG, PNG, WEBP images are allowed"), false);
+};
+
 const upload = multer({
   storage: imageStorage,
   limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: profilePhotoFileFilter,
 });
 
 router.post("/register", verifyFirebaseToken, registerUser);

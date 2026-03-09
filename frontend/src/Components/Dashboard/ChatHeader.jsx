@@ -58,6 +58,8 @@ const ChatHeader = ({
             <img
               src={getAvatar()}
               alt="User Avatar"
+              loading="lazy"
+              decoding="async"
               className="w-11 h-11 rounded-full object-cover bg-white"
             />
           </div>

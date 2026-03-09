@@ -233,6 +233,7 @@ const MessageBubble = ({
                 onError={() => setImgError(true)}
                 alt="attachment"
                 loading="lazy"
+                decoding="async"
               />
 
               <div className="pointer-events-none absolute inset-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition">

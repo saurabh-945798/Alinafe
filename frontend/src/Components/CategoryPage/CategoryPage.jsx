@@ -382,6 +382,8 @@ const CategoryPage = () => {
               <img
                 src="https://cdn-icons-png.flaticon.com/512/4076/4076500.png"
                 alt="No results"
+                loading="lazy"
+                decoding="async"
                 className="w-28 mx-auto mb-4 opacity-80"
               />
               <p className="text-gray-600 mb-4">No listings found</p>
@@ -414,6 +416,8 @@ const CategoryPage = () => {
                     <img
                       src={getImageUrl(item.images?.[0])}
                       alt={item.title}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
                     />
 
@@ -601,7 +605,9 @@ const CategoryPage = () => {
             <div className="flex items-center gap-3 p-3 rounded-2xl bg-white shadow-sm mb-5">
               <img
                 src={getImageUrl(shareModalAd.images?.[0])}
-                alt=""
+                alt={shareModalAd.title || "Ad image"}
+                loading="lazy"
+                decoding="async"
                 className="w-14 h-14 rounded-xl object-cover"
               />
               <div className="flex-1 min-w-0">

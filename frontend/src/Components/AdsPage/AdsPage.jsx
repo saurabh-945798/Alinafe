@@ -188,6 +188,8 @@ const AdsPage = () => {
             <img
               src="https://cdn-icons-png.flaticon.com/512/4076/4076500.png"
               alt="No ads"
+              loading="lazy"
+              decoding="async"
               className="w-28 mb-4 opacity-80"
             />
             <p className="text-lg font-medium text-gray-600">No ads found</p>
@@ -231,6 +233,8 @@ const AdsPage = () => {
                       <img
                         src={ad.images?.[0] || FALLBACK_IMAGE}
                         alt={ad.title}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     </div>

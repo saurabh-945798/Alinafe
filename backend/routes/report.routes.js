@@ -3,6 +3,7 @@ import multer from "multer";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import verifyFirebaseToken from "../middlewares/verifyFirebaseToken.js";
 import cloudinary from "../config/cloudinary.js";
+import multerErrorHandler from "../middlewares/multerErrorHandler.js";
 
 import {
   createReport,
@@ -19,9 +20,33 @@ const storage = new CloudinaryStorage({
   },
 });
 
-const upload = multer({ storage });
+const allowedReportMimeTypes = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+]);
 
-router.post("/", verifyFirebaseToken, upload.single("file"), createReport);
+const reportFileFilter = (req, file, cb) => {
+  if (allowedReportMimeTypes.has(file?.mimetype)) {
+    return cb(null, true);
+  }
+  return cb(new Error("Only image or PDF files are allowed"), false);
+};
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: reportFileFilter,
+});
+
+router.post(
+  "/",
+  verifyFirebaseToken,
+  upload.single("file"),
+  multerErrorHandler,
+  createReport
+);
 router.get("/user/:userId", verifyFirebaseToken, getUserReports);
 
 export default router;

@@ -127,6 +127,8 @@ const ChatPreviewSection = () => {
                     <img
                       src={chat.withUserPhoto}
                       alt={chat.withUserName}
+                      loading="lazy"
+                      decoding="async"
                       className="w-11 h-11 rounded-full object-cover"
                     />
                   ) : (

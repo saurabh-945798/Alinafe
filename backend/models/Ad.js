@@ -272,7 +272,16 @@ geo: {
     =========================== */
     status: {
       type: String,
-      enum: ["Pending", "Approved", "Rejected", "Sold", "deleted"],
+      enum: [
+        "Pending",
+        "Approved",
+        "Active",
+        "Hidden",
+        "Expired",
+        "Rejected",
+        "Sold",
+        "deleted",
+      ],
       default: "Pending",
       index: true,
     },

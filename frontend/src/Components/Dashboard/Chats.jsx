@@ -486,6 +486,7 @@ const Chats = () => {
                               alt={name}
                               className="h-11 w-11 rounded-2xl object-cover border border-white/70 shadow-sm"
                               loading="lazy"
+                              decoding="async"
                             />
                             {/* Status dot */}
                             <span
@@ -618,6 +619,7 @@ const Chats = () => {
                                     alt={name}
                                     className="h-12 w-12 rounded-2xl object-cover border border-white/70 shadow-sm"
                                     loading="lazy"
+                                    decoding="async"
                                   />
                                   <span
                                     className={[
@@ -682,6 +684,8 @@ const Chats = () => {
                           <img
                             src={avatarUrl(selectedChat?.withUserPhoto)}
                             alt={headerName}
+                            loading="lazy"
+                            decoding="async"
                             className="h-11 w-11 rounded-2xl object-cover border border-white/70 shadow-sm"
                           />
                           <span
@@ -771,6 +775,8 @@ const Chats = () => {
                           }
                           className="w-16 h-16 rounded-2xl object-cover border border-white/70 shadow-sm"
                           alt={safe(activeAd.title, "Ad")}
+                          loading="lazy"
+                          decoding="async"
                         />
                         {/* price tag (front-only) */}
                         {activeAd.price !== undefined && activeAd.price !== null && activeAd.price !== "" && (

@@ -308,6 +308,8 @@ const SellerProfile = () => {
                     <img
                       src={seller.image || fallbackAvatar}
                       alt="seller"
+                      loading="lazy"
+                      decoding="async"
                       className="w-12 h-12 rounded-xl object-cover border border-white/50"
                     />
                     <div className="leading-tight">
@@ -330,6 +332,8 @@ const SellerProfile = () => {
                   <img
                     src={seller.image || fallbackAvatar}
                     alt="seller"
+                    loading="lazy"
+                    decoding="async"
                     className="w-14 h-14 rounded-2xl object-cover border border-white/50"
                   />
                   <div className="leading-tight">
@@ -368,6 +372,8 @@ const SellerProfile = () => {
                   <img
                     src={seller.image || fallbackAvatar}
                     alt="seller"
+                    loading="lazy"
+                    decoding="async"
                     className="w-16 h-16 rounded-2xl object-cover border"
                   />
                   <div className="min-w-0">
@@ -557,6 +563,8 @@ const SellerProfile = () => {
                         <img
                           src={ad.images?.[0] || fallbackAvatar}
                           alt={ad.title}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-48 object-cover"
                         />
 

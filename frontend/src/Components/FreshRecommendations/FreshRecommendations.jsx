@@ -384,6 +384,7 @@ return (
     src={item.images?.[0] || "/no-img.png"}
     alt={item.title}
     loading="lazy"
+    decoding="async"
     className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
   />
 
@@ -596,7 +597,9 @@ return (
       <div className="flex items-center gap-3 p-3 rounded-2xl bg-white shadow-sm mb-5">
         <img
           src={shareModalAd.images?.[0] || "/no-img.png"}
-          alt=""
+          alt={shareModalAd.title || "Ad image"}
+          loading="lazy"
+          decoding="async"
           className="w-14 h-14 rounded-xl object-cover"
         />
         <div className="flex-1 min-w-0">

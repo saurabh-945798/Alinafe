@@ -242,6 +242,8 @@ const MyAds = () => {
             <img
               src="https://cdn-icons-png.flaticon.com/512/4076/4076509.png"
               alt="no ads"
+              loading="lazy"
+              decoding="async"
               className="w-32 mb-5 opacity-80 drop-shadow-md"
             />
             <h2 className="text-xl font-semibold text-[#009688] mb-1">
@@ -283,6 +285,8 @@ const MyAds = () => {
                           : "https://via.placeholder.com/400x300?text=No+Image"
                       }
                       alt={ad.title}
+                      loading="lazy"
+                      decoding="async"
                       className="h-56 w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                     <Badge

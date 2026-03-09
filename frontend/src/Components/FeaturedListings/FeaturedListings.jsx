@@ -125,6 +125,8 @@ const FeaturedListings = () => {
                           : "https://cdn-icons-png.flaticon.com/512/4076/4076500.png"
                       }
                       alt={ad.title}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
                       whileHover={{
                         scale: reduceMotion ? 1 : 1.08,

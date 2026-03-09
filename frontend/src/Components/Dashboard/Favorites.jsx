@@ -145,6 +145,8 @@ const Favorites = () => {
                   <img
                     src={getImageUrl(item.images?.[0])}
                     alt={item.title}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
                   <button
