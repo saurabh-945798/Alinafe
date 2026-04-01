@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Swal from "sweetalert2";
 import adminApi from "../../api/adminApi.js"; // path adjust karo
+import { handleAvatarError, withAvatarFallback } from "../../utils/avatarFallback.js";
 
 const Users = () => {
   const [users, setUsers] = useState([]);
@@ -24,8 +25,7 @@ const Users = () => {
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
 
-  const fallbackImage =
-    "https://res.cloudinary.com/dxah12xl4/image/upload/v1731010204/default_user.png";
+  const fallbackImage = "/default-avatar.svg";
 
   // Fetch all users
   useEffect(() => {
@@ -211,10 +211,11 @@ const Users = () => {
                 >
                   <td className="p-4 font-medium text-gray-800">
                     <div className="flex items-center gap-3">
-                      {user.photoURL?.includes("res.cloudinary.com") ? (
+                      {user.photoURL ? (
                         <img
-                          src={user.photoURL}
+                          src={withAvatarFallback(user.photoURL)}
                           alt={user.name}
+                          onError={handleAvatarError}
                           className="w-11 h-11 rounded-full border-2 border-[#009688]"
                         />
                       ) : (
@@ -319,12 +320,9 @@ const Users = () => {
 
               <div className="flex flex-col items-center text-center space-y-3">
                 <img
-                  src={
-                    selectedUser.photoURL?.includes("res.cloudinary.com")
-                      ? selectedUser.photoURL
-                      : fallbackImage
-                  }
+                  src={withAvatarFallback(selectedUser.photoURL || fallbackImage)}
                   alt={selectedUser.name}
+                  onError={handleAvatarError}
                   className="w-24 h-24 rounded-full border-4 border-[#009688]"
                 />
 

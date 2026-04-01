@@ -74,6 +74,7 @@ app.set("trust proxy", 1);
 
 const defaultAllowedOrigins = [
   "http://localhost:5173",
+  "http://localhost:5174",
   "http://localhost:3000",
   "https://alinafe.in",
   "https://www.alinafe.in",
@@ -115,26 +116,29 @@ if (morganMiddleware) {
 }
 
 // 🌍 GLOBAL CORS — FINAL FIXED VERSION
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (allowedOriginSet.has(origin)) {
-        return callback(null, true);
-      }
-      console.warn(
-        JSON.stringify({
-          ts: new Date().toISOString(),
-          level: "warn",
-          msg: "cors_blocked",
-          origin,
-        })
-      );
-      return callback(null, false);
-    },
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOriginSet.has(origin)) {
+      return callback(null, true);
+    }
+    console.warn(
+      JSON.stringify({
+        ts: new Date().toISOString(),
+        level: "warn",
+        msg: "cors_blocked",
+        origin,
+      })
+    );
+    return callback(null, false);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 
 

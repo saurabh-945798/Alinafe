@@ -1,0 +1,30 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="256" fill="#ECFDFB"/>
+  <circle cx="256" cy="192" r="104" fill="url(#skin)"/>
+  <path d="M145 188C145 118 194 72 256 72C318 72 367 118 367 188V212C367 224 357 234 345 234H167C155 234 145 224 145 212V188Z" fill="url(#hair)"/>
+  <path d="M194 254C208 234 229 222 256 222C283 222 304 234 318 254V318C318 353 290 382 256 382C222 382 194 353 194 318V254Z" fill="url(#beard)"/>
+  <path d="M96 454C120 380 182 338 256 338C330 338 392 380 416 454V472H96V454Z" fill="url(#shirt)"/>
+  <circle cx="214" cy="198" r="14" fill="#1E293B"/>
+  <circle cx="298" cy="198" r="14" fill="#1E293B"/>
+  <path d="M208 170C224 160 242 158 258 162" stroke="#111827" stroke-width="14" stroke-linecap="round"/>
+  <path d="M304 170C288 160 270 158 254 162" stroke="#111827" stroke-width="14" stroke-linecap="round"/>
+  <path d="M224 284C243 302 269 302 288 284" stroke="#C26D4F" stroke-width="12" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="skin" x1="152" y1="128" x2="360" y2="280" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE1B2"/>
+      <stop offset="1" stop-color="#F6B9A0"/>
+    </linearGradient>
+    <linearGradient id="hair" x1="145" y1="72" x2="367" y2="234" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5B2D33"/>
+      <stop offset="1" stop-color="#0F2A66"/>
+    </linearGradient>
+    <linearGradient id="beard" x1="194" y1="222" x2="318" y2="382" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3B2330"/>
+      <stop offset="1" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="shirt" x1="96" y1="338" x2="416" y2="472" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A9C6E8"/>
+      <stop offset="1" stop-color="#2B5EA8"/>
+    </linearGradient>
+  </defs>
+</svg>

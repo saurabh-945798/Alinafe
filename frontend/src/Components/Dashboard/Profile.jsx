@@ -30,6 +30,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "../ui/dialog.jsx";
+import { handleAvatarError, withAvatarFallback } from "../../utils/avatarFallback.js";
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "").trim() || "/api";
 
@@ -38,7 +39,7 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [photoUploading, setPhotoUploading] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState(user?.photoURL || "");
+  const [avatarUrl, setAvatarUrl] = useState(withAvatarFallback(user?.photoURL));
   const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
   const [selectedPhotoFile, setSelectedPhotoFile] = useState(null);
   const [selectedPhotoPreview, setSelectedPhotoPreview] = useState("");
@@ -67,7 +68,7 @@ const Profile = () => {
           phone: profile.phone || "",
           location: profile.location || "",
         });
-        setAvatarUrl(profile.photoURL || user?.photoURL || "");
+        setAvatarUrl(withAvatarFallback(profile.photoURL || user?.photoURL || ""));
       } catch (error) {
         console.error(
           "Profile load failed:",
@@ -143,7 +144,7 @@ const Profile = () => {
 
       const photoURL = res.data?.photoURL || "";
       if (photoURL) {
-        setAvatarUrl(photoURL);
+        setAvatarUrl(withAvatarFallback(photoURL));
         await updateProfile(auth.currentUser, {
           photoURL,
         });
@@ -268,17 +269,12 @@ const Profile = () => {
 
           <div className="flex flex-col items-center text-center mb-8">
             <div className="relative">
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt={form.name || "User"}
-                  className="w-24 h-24 rounded-full object-cover shadow-lg border-2 border-[#009688]/20"
-                />
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-[#009688] to-[#00796B] flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-                  {form.name?.[0] || "U"}
-                </div>
-              )}
+              <img
+                src={withAvatarFallback(avatarUrl)}
+                alt={form.name || "User"}
+                onError={handleAvatarError}
+                className="w-24 h-24 rounded-full object-cover shadow-lg border-2 border-[#009688]/20"
+              />
 
               <label
                 htmlFor="profile-photo-upload"

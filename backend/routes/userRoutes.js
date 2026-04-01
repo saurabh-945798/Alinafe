@@ -1,8 +1,10 @@
 import express from "express";
 import multer from "multer";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
+import path from "path";
+import fs from "fs";
+import crypto from "crypto";
+import { fileURLToPath } from "url";
 import verifyFirebaseToken from "../middlewares/verifyFirebaseToken.js";
-import cloudinary from "../config/cloudinary.js";
 import multerErrorHandler from "../middlewares/multerErrorHandler.js";
 
 import {
@@ -23,12 +25,45 @@ import {
 
 const router = express.Router();
 
-const imageStorage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: "alinafe/users",
-    allowed_formats: ["jpg", "jpeg", "png", "webp"],
-    resource_type: "image",
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsRoot = path.resolve(__dirname, "../uploads");
+
+const imageMimeToExt = {
+  "image/jpeg": ".jpg",
+  "image/jpg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+};
+
+const ensureDir = (dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+};
+
+const getDatePartition = () => {
+  const now = new Date();
+  return {
+    yyyy: String(now.getUTCFullYear()),
+    mm: String(now.getUTCMonth() + 1).padStart(2, "0"),
+    dd: String(now.getUTCDate()).padStart(2, "0"),
+  };
+};
+
+const imageStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const { yyyy, mm, dd } = getDatePartition();
+    const dir = path.join(uploadsRoot, "images", yyyy, mm, dd);
+    ensureDir(dir);
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    const ext = imageMimeToExt[file.mimetype];
+    if (!ext) {
+      return cb(new Error("Only JPG, JPEG, PNG, WEBP images are allowed"));
+    }
+    cb(null, `${Date.now()}-${crypto.randomUUID()}${ext}`);
   },
 });
 

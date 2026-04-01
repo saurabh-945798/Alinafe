@@ -19,6 +19,7 @@ import {
   Settings,
 } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { handleAvatarError, withAvatarFallback } from "../../utils/avatarFallback.js";
 
 const SIDEBAR_WIDTH = 260;
 const COLLAPSED_WIDTH = 80;
@@ -34,7 +35,7 @@ const Sidebar = () => {
   const { user, logout } = useAuth();
 
   const userName = user?.name || user?.displayName || user?.email?.split("@")[0] || "User";
-  const userImage = user?.photoURL || "/images/user.png";
+  const userImage = withAvatarFallback(user?.photoURL);
 
   /* ======================
      SCREEN SIZE DETECT
@@ -184,9 +185,7 @@ const Sidebar = () => {
                 loading="lazy"
                 decoding="async"
                 className="w-9 h-9 rounded-full object-cover"
-                onError={(e) => {
-                  e.target.src = `https://ui-avatars.com/api/?name=${userName}`;
-                }}
+                onError={handleAvatarError}
               />
               <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full" />
             </div>

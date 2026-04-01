@@ -1,6 +1,7 @@
 import React from "react";
 import { ArrowLeft, Trash2, Tag } from "lucide-react";
 import { motion as Motion } from "framer-motion";
+import { handleAvatarError, withAvatarFallback } from "../../utils/avatarFallback.js";
 
 const ChatHeader = ({
   chat,
@@ -13,9 +14,7 @@ const ChatHeader = ({
      Avatar Fallback
   ---------------------------- */
   const getAvatar = () =>
-    chat?.withUserPhoto && chat.withUserPhoto.trim() !== ""
-      ? chat.withUserPhoto
-      : "/default-user.png";
+    withAvatarFallback(chat?.withUserPhoto);
 
   /* ---------------------------
      Last Seen Formatter
@@ -60,6 +59,7 @@ const ChatHeader = ({
               alt="User Avatar"
               loading="lazy"
               decoding="async"
+              onError={handleAvatarError}
               className="w-11 h-11 rounded-full object-cover bg-white"
             />
           </div>

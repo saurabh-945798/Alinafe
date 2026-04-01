@@ -22,6 +22,7 @@ import ChatInput from "../../Components/Dashboard/ChatInput.jsx";
 import { useChatSocket } from "../../hooks/useChatSocket.js";
 import { useChatMessages } from "../../hooks/useChatMessages.js";
 import { auth } from "../../firebase.js";
+import { handleAvatarError, withAvatarFallback } from "../../utils/avatarFallback.js";
 
 /* ------------------------------------------
   Utils
@@ -52,7 +53,7 @@ const formatINR = (n) => {
   return num.toLocaleString("en-IN", { maximumFractionDigits: 0 });
 };
 
-const avatarUrl = (photoUrl) => safe(photoUrl, "");
+const avatarUrl = (photoUrl) => withAvatarFallback(safe(photoUrl, ""));
 
 /* ------------------------------------------
   Empty State Illustration
@@ -487,6 +488,7 @@ const Chats = () => {
                               className="h-11 w-11 rounded-2xl object-cover border border-white/70 shadow-sm"
                               loading="lazy"
                               decoding="async"
+                              onError={handleAvatarError}
                             />
                             {/* Status dot */}
                             <span
@@ -620,6 +622,7 @@ const Chats = () => {
                                     className="h-12 w-12 rounded-2xl object-cover border border-white/70 shadow-sm"
                                     loading="lazy"
                                     decoding="async"
+                                    onError={handleAvatarError}
                                   />
                                   <span
                                     className={[
@@ -687,6 +690,7 @@ const Chats = () => {
                             loading="lazy"
                             decoding="async"
                             className="h-11 w-11 rounded-2xl object-cover border border-white/70 shadow-sm"
+                            onError={handleAvatarError}
                           />
                           <span
                             className={[
@@ -777,6 +781,11 @@ const Chats = () => {
                           alt={safe(activeAd.title, "Ad")}
                           loading="lazy"
                           decoding="async"
+                          onError={(event) => {
+                            event.currentTarget.onerror = null;
+                            event.currentTarget.src =
+                              "https://cdn-icons-png.flaticon.com/512/4076/4076500.png";
+                          }}
                         />
                         {/* price tag (front-only) */}
                         {activeAd.price !== undefined && activeAd.price !== null && activeAd.price !== "" && (

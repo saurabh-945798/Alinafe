@@ -21,6 +21,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import SearchBar from "../SearchBar/SearchBar.jsx";
+import { handleAvatarError, withAvatarFallback } from "../../utils/avatarFallback.js";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -58,19 +59,13 @@ const Navbar = () => {
      AVATAR
   ========================= */
   const getAvatar = () => {
-    if (user?.photoURL)
-      return (
-        <img
-          src={user.photoURL}
-          alt="User"
-          className="w-10 h-10 rounded-full object-cover border border-[#0E9F9F]/30 shadow-sm"
-        />
-      );
-    const letter = (user?.name || user?.displayName || user?.email || "U").charAt(0);
     return (
-      <div className="w-10 h-10 flex items-center justify-center rounded-full bg-[#0E9F9F] text-white font-semibold shadow-sm">
-        {letter}
-      </div>
+      <img
+        src={withAvatarFallback(user?.photoURL)}
+        alt="User"
+        onError={handleAvatarError}
+        className="w-10 h-10 rounded-full object-cover border border-[#0E9F9F]/30 shadow-sm"
+      />
     );
   };
 

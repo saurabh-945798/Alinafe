@@ -1,10 +1,18 @@
 import User from "../models/User.js";
-import cloudinary from "../config/cloudinary.js";
 import axios from "axios";
-import streamifier from "streamifier";
 import bcrypt from "bcrypt";
 import { EmailService } from "../Services/email.service.js";
 import { formatIndianPhone } from "../utils/formatIndianPhone.js";
+import { optimizeImageToJpeg } from "../utils/optimizeImage.js";
+import {
+  buildUploadUrlFromAbsolute,
+  getApiBaseUrl,
+  isCloudinaryUrl,
+  isLocalUploadUrl,
+  localAbsolutePathFromUrl,
+} from "../utils/uploadPath.js";
+import { uploadsRoot } from "../middlewares/uploadLocalMedia.js";
+import fs from "fs/promises";
 
 const LOGIN_EMAIL_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 const EMAIL_OTP_TTL_MS = 10 * 60 * 1000;
@@ -62,21 +70,6 @@ const buildPhoneCandidates = (value = "") => {
   return Array.from(set);
 };
 
-const uploadPhotoToCloudinary = async (photoURL) => {
-  if (!photoURL || !photoURL.startsWith("http")) return "";
-
-  const response = await axios.get(photoURL, { responseType: "arraybuffer" });
-  const uploadResult = await new Promise((resolve, reject) => {
-    const uploadStream = cloudinary.uploader.upload_stream(
-      { folder: "alinafe/users" },
-      (error, result) => (error ? reject(error) : resolve(result))
-    );
-    streamifier.createReadStream(response.data).pipe(uploadStream);
-  });
-
-  return uploadResult.secure_url;
-};
-
 /* =====================================================
    REGISTER / SYNC USER (FIREBASE TOKEN PROTECTED)
 ===================================================== */
@@ -112,24 +105,10 @@ export const registerUser = async (req, res) => {
 
     let user = await User.findOne({ uid });
     let created = false;
-    let cloudinaryUrl = "";
-
-    try {
-      if (
-        photoURLFromBody &&
-        (!user || !user.photoURL?.includes("res.cloudinary.com"))
-      ) {
-        cloudinaryUrl = await uploadPhotoToCloudinary(photoURLFromBody);
-      }
-    } catch (imgErr) {
-      console.error("Image upload skipped:", imgErr.message);
-    }
-
     const desiredPhoto =
-      cloudinaryUrl ||
       photoURLFromBody ||
       firebaseUser.picture ||
-      `https://ui-avatars.com/api/?name=${encodeURIComponent(fallbackName)}`;
+      "";
 
     if (!user) {
       try {
@@ -166,7 +145,7 @@ export const registerUser = async (req, res) => {
       user.lastLogin = new Date();
       user.name = fallbackName || user.name;
       user.email = email;
-      if (cloudinaryUrl) user.photoURL = cloudinaryUrl;
+      if (photoURLFromBody) user.photoURL = photoURLFromBody;
       if (contactNumberFromBody) {
         user.phone = contactNumberFromBody;
         user.contactNumber = contactNumberFromBody;
@@ -412,14 +391,44 @@ export const updateUserPhoto = async (req, res) => {
       });
     }
 
-    user.photoURL = req.file.path;
-    await user.save();
+    const apiBaseUrl = getApiBaseUrl();
+    if (!apiBaseUrl) {
+      return res.status(500).json({
+        success: false,
+        message: "API_BASE_URL not configured",
+      });
+    }
+
+    const optimizedAbsolutePath = await optimizeImageToJpeg(req.file.path);
+    const localPhotoUrl = buildUploadUrlFromAbsolute(
+      optimizedAbsolutePath,
+      uploadsRoot,
+      apiBaseUrl
+    );
+
+    if (isLocalUploadUrl(user.photoURL) && !isCloudinaryUrl(user.photoURL)) {
+      try {
+        const previousAbsolutePath = localAbsolutePathFromUrl(
+          user.photoURL,
+          uploadsRoot
+        );
+        await fs.unlink(previousAbsolutePath);
+      } catch {
+        // best effort cleanup
+      }
+    }
+
+    const updatedUser = await User.findOneAndUpdate(
+      { uid },
+      { $set: { photoURL: localPhotoUrl } },
+      { new: true }
+    );
 
     return res.status(200).json({
       success: true,
       message: "Profile photo updated successfully",
-      photoURL: user.photoURL,
-      user,
+      photoURL: updatedUser?.photoURL || localPhotoUrl,
+      user: updatedUser,
     });
   } catch (error) {
     console.error("Error updating profile photo:", error);

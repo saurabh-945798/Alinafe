@@ -18,6 +18,7 @@ import {
   Play,
   X,
   Star,
+  Share2,
   CheckCircle2,
   ShieldCheck,
   MessageSquare,
@@ -34,6 +35,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import Swal from "sweetalert2";
+import { handleAvatarError, withAvatarFallback } from "../../utils/avatarFallback.js";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -59,6 +61,8 @@ const ProductDetails = () => {
   const [showFullImage, setShowFullImage] = useState(false);
   const [fullImageIndex, setFullImageIndex] = useState(0);
   const [sellerStats, setSellerStats] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareToast, setShareToast] = useState(false);
   const [showCallbackModal, setShowCallbackModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [callbackForm, setCallbackForm] = useState({
@@ -383,6 +387,31 @@ useEffect(() => {
     return shareUrl
       ? `Hello I\u2019m interested ${shareUrl}`
       : "Hello I\u2019m interested";
+  };
+
+  const shareUrl = ad?._id ? `${window.location.origin}/ad/${ad._id}` : "";
+
+  const handleCopyShareLink = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShowShareModal(false);
+      setShareToast(true);
+      window.setTimeout(() => setShareToast(false), 1500);
+    } catch {
+      Swal.fire("Error", "Unable to copy link", "error");
+    }
+  };
+
+  const handleShareOnWhatsApp = () => {
+    if (!shareUrl) return;
+    const text = `Check this product on Alinafe\n${shareUrl}`;
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(text)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+    setShowShareModal(false);
   };
 
   const handleWhatsAppChat = () => {
@@ -718,7 +747,7 @@ useEffect(() => {
           </div>
 
           {/* â¤ï¸ Favorite Button Section */}
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-4 mb-6 flex-wrap">
             <motion.button
               whileTap={{ scale: 0.95 }}
               whileHover={{ y: -2 }}
@@ -749,6 +778,17 @@ useEffect(() => {
               <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[11px] text-gray-500 opacity-0 group-hover:opacity-100 transition-all duration-300">
                 {isFav ? "Remove from favorites" : "Save this ad"}
               </span>
+            </motion.button>
+
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ y: -2 }}
+              onClick={() => setShowShareModal(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full border border-[#0E9F9F]/20 bg-white text-[#0E9F9F] text-sm font-semibold shadow-sm hover:bg-[#F2FBFB] transition-all duration-300"
+              aria-label="Share this product"
+            >
+              <Share2 size={17} />
+              Share
             </motion.button>
           </div>
 
@@ -832,13 +872,11 @@ useEffect(() => {
       >
         <div className="relative">
           <img
-            src={
-              ad.ownerImage ||
-              "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
-            }
+            src={withAvatarFallback(ad.ownerImage)}
             alt="seller"
             loading="lazy"
             decoding="async"
+            onError={handleAvatarError}
             className="w-16 h-16 rounded-full border-2 border-[#0E9F9F]/30 
             object-cover shadow-sm group-hover:scale-105 transition"
           />
@@ -1189,6 +1227,95 @@ useEffect(() => {
           </p>
         )}
       </motion.div>
+
+      {shareToast && (
+        <div className="fixed top-24 right-4 z-[9999] rounded-full bg-[#0E9F9F] px-4 py-2 text-sm font-medium text-white shadow-lg">
+          Link copied
+        </div>
+      )}
+
+      {showShareModal && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          onClick={() => setShowShareModal(false)}
+        >
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-full sm:w-[420px] rounded-t-3xl sm:rounded-3xl bg-gradient-to-br from-white via-[#F8FFFD] to-[#ECFDFB] p-6 shadow-2xl"
+          >
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h3 className="text-lg font-semibold text-[#0F766E]">
+                  Share this product
+                </h3>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Choose how you want to share
+                </p>
+              </div>
+
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-white shadow hover:bg-gray-50 transition"
+                aria-label="Close share modal"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-3 p-3 rounded-2xl bg-white shadow-sm mb-5">
+              <img
+                src={activeImage || "https://cdn-icons-png.flaticon.com/512/4076/4076500.png"}
+                alt={ad.title || "Ad image"}
+                loading="lazy"
+                decoding="async"
+                className="w-14 h-14 rounded-xl object-cover"
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 truncate">
+                  {ad.title}
+                </p>
+                <p className="text-xs text-gray-500 truncate">
+                  {ad.city || "India"}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={handleCopyShareLink}
+                className="flex flex-col items-center justify-center gap-2 py-4 rounded-2xl bg-white border hover:bg-[#ECFDFB] transition"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#E6FFFB] flex items-center justify-center text-[#0F766E]">
+                  <Share2 size={18} />
+                </div>
+                <span className="text-xs font-medium text-gray-700">
+                  Copy link
+                </span>
+              </button>
+
+              <button
+                onClick={handleShareOnWhatsApp}
+                className="flex flex-col items-center justify-center gap-2 py-4 rounded-2xl bg-[#25D366]/10 hover:bg-[#25D366]/20 transition"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#25D366] flex items-center justify-center text-white">
+                  <MessageCircle size={18} />
+                </div>
+                <span className="text-xs font-medium text-gray-700">
+                  WhatsApp
+                </span>
+              </button>
+            </div>
+
+            <p className="text-[11px] text-gray-400 text-center mt-5">
+              Secure sharing by Alinafe
+            </p>
+          </motion.div>
+        </div>
+      )}
 
       {showCallbackModal && (
         <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4">
