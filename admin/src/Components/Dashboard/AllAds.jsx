@@ -733,7 +733,7 @@ const AllAds = () => {
               exit={{ scale: 0.95 }}
               className="relative max-h-[90vh] w-[95%] overflow-y-auto rounded-[28px] bg-white shadow-2xl md:w-[82%] xl:w-[72%]"
             >
-              <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b bg-white/95 px-6 py-5 backdrop-blur">
+              <div className="sticky top-0 z-10 flex flex-col gap-4 border-b bg-white/95 px-6 py-5 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
                   <p className="text-xs uppercase tracking-[0.24em] text-slate-500">
                     Ad Preview
@@ -751,16 +751,16 @@ const AllAds = () => {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex w-full items-center justify-end gap-2 sm:w-auto sm:gap-3">
                   <button
                     onClick={() => openEdit(selectedAd)}
-                    className="inline-flex items-center gap-2 rounded-2xl bg-[#0F766E] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0B5E59]"
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-[#0F766E]/10 bg-[#0F766E] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(15,118,110,0.22)] transition hover:-translate-y-0.5 hover:bg-[#0B5E59] sm:flex-none"
                   >
                     <PencilLine size={16} /> Edit Ad
                   </button>
                   <button
                     onClick={() => setSelectedAd(null)}
-                    className="flex h-10 w-10 items-center justify-center rounded-full border text-slate-500 hover:bg-slate-50"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 text-slate-500 transition hover:bg-slate-50"
                   >
                     <X size={20} />
                   </button>

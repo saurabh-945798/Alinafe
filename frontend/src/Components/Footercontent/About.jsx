@@ -7,6 +7,7 @@ import {
   Lightbulb,
   CheckCircle,
 } from "lucide-react";
+import dineshSirImage from "../../../assets/Dinesh Sir.png";
 
 const About = () => {
   return (
@@ -33,7 +34,7 @@ const About = () => {
       <div className="relative w-[320px] h-[320px]">
         <div className="absolute -bottom-6 left-1/2 h-16 w-56 -translate-x-1/2 rounded-full bg-[#0E9F9F]/20 blur-xl" />
         <img
-          src="https://res.cloudinary.com/dxah12xl4/image/upload/v1768720593/WhatsApp_Image_2026-01-14_at_22.06.19_y2f5ow.jpg"
+          src={dineshSirImage}
           alt="Founder of ALINAFE India"
           className="w-full h-full rounded-full shadow-lg object-cover"
         />
