@@ -6,8 +6,10 @@ import {
   MessageSquare,
   CheckCircle,
   Clock,
+  Trash2,
 } from "lucide-react";
 import api from "../../utils/api.js";
+import Swal from "sweetalert2";
 
 const AdminContactInbox = () => {
   const [messages, setMessages] = useState([]);
@@ -37,6 +39,33 @@ const AdminContactInbox = () => {
         "Failed to mark as read",
         err?.response?.data?.message || err.message
       );
+    }
+  };
+
+  const deleteMessage = async (id) => {
+    const res = await Swal.fire({
+      title: "Delete this message?",
+      text: "This will permanently remove the chat from the admin inbox.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Delete",
+      confirmButtonColor: "#DC2626",
+    });
+
+    if (!res.isConfirmed) return;
+
+    try {
+      await api.delete(`/contact/admin/messages/${id}`);
+      setMessages((prev) => prev.filter((msg) => msg._id !== id));
+      setActiveMessage((prev) => (prev?._id === id ? null : prev));
+
+      Swal.fire("Deleted", "Message deleted successfully.", "success");
+    } catch (err) {
+      console.error(
+        "Failed to delete message",
+        err?.response?.data?.message || err.message
+      );
+      Swal.fire("Error", "Failed to delete message", "error");
     }
   };
 
@@ -133,6 +162,17 @@ const AdminContactInbox = () => {
                       {activeMessage.email}
                     </p>
                   </div>
+                </div>
+
+                <div className="mb-6 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => deleteMessage(activeMessage._id)}
+                    className="inline-flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+                  >
+                    <Trash2 size={16} />
+                    Delete 
+                  </button>
                 </div>
 
                 <div className="mb-6">

@@ -1,6 +1,6 @@
-// src/Components/Dashboard/Messages.jsx
 import React, { useEffect, useState } from "react";
-import adminApi from "../../api/adminApi"; // ✅ JWT INCLUDED
+import adminApi from "../../api/adminApi";
+import Swal from "sweetalert2";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -8,6 +8,7 @@ import {
   Clock,
   User,
   ArrowLeft,
+  Trash2,
 } from "lucide-react";
 
 const Messages = () => {
@@ -16,9 +17,6 @@ const Messages = () => {
   const [messages, setMessages] = useState([]);
   const [search, setSearch] = useState("");
 
-  /* ======================================================
-        FETCH ALL CONVERSATIONS (ADMIN AUTH)
-  ====================================================== */
   useEffect(() => {
     const fetchConversations = async () => {
       try {
@@ -39,9 +37,6 @@ const Messages = () => {
     fetchConversations();
   }, []);
 
-  /* ======================================================
-        FETCH MESSAGES FOR SELECTED CHAT
-  ====================================================== */
   const openConversation = async (convId) => {
     setSelectedConv(convId);
     setMessages([]);
@@ -54,9 +49,37 @@ const Messages = () => {
     }
   };
 
-  /* ======================================================
-        FILTER CONVERSATIONS
-  ====================================================== */
+  const handleDeleteConversation = async () => {
+    if (!selectedConv) return;
+
+    const result = await Swal.fire({
+      title: "Delete this chat?",
+      text: "This will permanently remove the conversation and all messages.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Delete",
+      confirmButtonColor: "#DC2626",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await adminApi.delete(`/conversations/${selectedConv}`);
+      setConversations((prev) => prev.filter((conv) => conv._id !== selectedConv));
+      setSelectedConv(null);
+      setMessages([]);
+
+      Swal.fire("Deleted", "Conversation deleted successfully.", "success");
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      Swal.fire(
+        "Error",
+        error?.response?.data?.error || "Failed to delete conversation",
+        "error"
+      );
+    }
+  };
+
   const filteredConversations = conversations.filter((conv) => {
     const searchLower = search.toLowerCase();
     return (
@@ -66,31 +89,23 @@ const Messages = () => {
     );
   });
 
-  /* ======================================================
-        UI RENDER
-  ====================================================== */
+  const activeConversation = conversations.find((c) => c._id === selectedConv);
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-[#E0F2F1] via-white to-[#E0F2F1] font-[Poppins]">
-
-      {/* ------------------------------------------
-            LEFT SIDEBAR — CONVERSATIONS
-      ------------------------------------------- */}
-      <div className="w-1/3 border-r bg-white/80 backdrop-blur-xl shadow-xl flex flex-col">
-
-        {/* SEARCH */}
-        <div className="p-4 flex items-center border-b bg-[#E0F2F1]/60 shadow-sm">
-          <Search className="text-[#00695C] mr-2" size={18} />
+      <div className="flex w-1/3 flex-col border-r bg-white/80 shadow-xl backdrop-blur-xl">
+        <div className="flex items-center border-b bg-[#E0F2F1]/60 p-4 shadow-sm">
+          <Search className="mr-2 text-[#00695C]" size={18} />
           <input
             type="text"
             placeholder="Search user or message..."
-            className="flex-1 bg-transparent outline-none text-gray-700"
+            className="flex-1 bg-transparent text-gray-700 outline-none"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        {/* CONVERSATION LIST */}
-        <div className="overflow-y-auto flex-1 p-3 space-y-3 bg-gradient-to-b from-white to-[#E0F2F1]">
+        <div className="flex-1 space-y-3 overflow-y-auto bg-gradient-to-b from-white to-[#E0F2F1] p-3">
           {filteredConversations.length > 0 ? (
             filteredConversations.map((conv) => (
               <motion.div
@@ -99,45 +114,42 @@ const Messages = () => {
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ scale: 1.03 }}
                 onClick={() => openConversation(conv._id)}
-                className={`flex justify-between items-center p-4 rounded-2xl cursor-pointer transition-all border
-                  ${
-                    selectedConv === conv._id
-                      ? "bg-[#009688]/15 border-[#009688]/40 shadow-md"
-                      : "bg-white hover:bg-[#009688]/10 hover:border-[#009688]/30"
-                  }`}
+                className={`flex cursor-pointer items-center justify-between rounded-2xl border p-4 transition-all ${
+                  selectedConv === conv._id
+                    ? "border-[#009688]/40 bg-[#009688]/15 shadow-md"
+                    : "bg-white hover:border-[#009688]/30 hover:bg-[#009688]/10"
+                }`}
               >
-                {/* USER INFO */}
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#009688] to-[#004D40] text-white flex items-center justify-center font-semibold shadow">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-[#009688] to-[#004D40] font-semibold text-white shadow">
                       {conv.userA?.name?.charAt(0)?.toUpperCase() || "U"}
                     </div>
-                    <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                    <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white bg-green-500"></span>
                   </div>
 
                   <div>
                     <p className="font-semibold text-[#004D40]">
                       {conv.userA?.name} ↔ {conv.userB?.name}
                     </p>
-                    <p className="text-sm text-gray-500 truncate max-w-[150px]">
+                    <p className="max-w-[150px] truncate text-sm text-gray-500">
                       {conv.lastMessage || "No messages yet"}
                     </p>
                   </div>
                 </div>
 
-                {/* TIME */}
                 <div className="text-right text-xs text-gray-500">
                   {conv.updatedAt &&
                     new Date(conv.updatedAt).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
-                  <Clock className="text-[#00695C] mt-1 mx-auto" size={14} />
+                  <Clock className="mx-auto mt-1 text-[#00695C]" size={14} />
                 </div>
               </motion.div>
             ))
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400">
+            <div className="flex h-full flex-col items-center justify-center text-gray-400">
               <MessageSquare size={28} />
               <p>No conversations found</p>
             </div>
@@ -145,15 +157,10 @@ const Messages = () => {
         </div>
       </div>
 
-      {/* ------------------------------------------
-            RIGHT SIDE — CHAT WINDOW
-      ------------------------------------------- */}
-      <div className="flex-1 flex flex-col bg-gradient-to-b from-white to-[#E0F2F1]">
-
+      <div className="flex flex-1 flex-col bg-gradient-to-b from-white to-[#E0F2F1]">
         {selectedConv ? (
           <>
-            {/* HEADER */}
-            <div className="p-4 border-b bg-white/90 backdrop-blur-md shadow flex items-center gap-3">
+            <div className="flex items-center gap-3 border-b bg-white/90 p-4 shadow backdrop-blur-md">
               <button onClick={() => setSelectedConv(null)} className="lg:hidden">
                 <ArrowLeft size={20} className="text-[#00695C]" />
               </button>
@@ -162,41 +169,44 @@ const Messages = () => {
 
               <div>
                 <p className="font-semibold text-[#004D40]">
-                  {conversations.find((c) => c._id === selectedConv)?.userA?.name}
+                  {activeConversation?.userA?.name}
                   {" ↔ "}
-                  {conversations.find((c) => c._id === selectedConv)?.userB?.name}
+                  {activeConversation?.userB?.name}
                 </p>
                 <p className="text-xs text-gray-500">Conversation View</p>
               </div>
+
+              <button
+                type="button"
+                onClick={handleDeleteConversation}
+                className="ml-auto inline-flex items-center gap-2 rounded-xl bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-100"
+              >
+                <Trash2 size={16} />
+                Delete Chat
+              </button>
             </div>
 
-            {/* MESSAGES */}
-            <div className="flex-1 p-4 space-y-3 overflow-y-auto">
+            <div className="flex-1 space-y-3 overflow-y-auto p-4">
               {messages.length > 0 ? (
                 messages.map((msg) => {
-                  const conv = conversations.find(
-                    (c) => c._id === selectedConv
-                  );
-                  const isSenderA = msg.senderId === conv?.userA?._id;
+                  const isSenderA = msg.senderId === activeConversation?.userA?._id;
 
                   return (
                     <motion.div
                       key={msg._id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className={`flex ${
-                        isSenderA ? "justify-end" : "justify-start"
-                      }`}
+                      className={`flex ${isSenderA ? "justify-end" : "justify-start"}`}
                     >
                       <div
-                        className={`max-w-xs p-3 rounded-2xl shadow text-sm ${
+                        className={`max-w-xs rounded-2xl p-3 text-sm shadow ${
                           isSenderA
                             ? "bg-[#009688] text-white"
                             : "bg-[#E0F2F1] text-[#004D40]"
                         }`}
                       >
                         {msg.message || msg.text}
-                        <p className="text-[10px] opacity-80 mt-1 text-right">
+                        <p className="mt-1 text-right text-[10px] opacity-80">
                           {new Date(msg.createdAt).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -207,7 +217,7 @@ const Messages = () => {
                   );
                 })
               ) : (
-                <div className="flex items-center justify-center h-full text-gray-400">
+                <div className="flex h-full items-center justify-center text-gray-400">
                   <MessageSquare size={26} />
                   <span className="ml-2">No messages yet</span>
                 </div>
@@ -215,7 +225,7 @@ const Messages = () => {
             </div>
           </>
         ) : (
-          <div className="flex flex-col justify-center items-center h-full text-gray-400">
+          <div className="flex h-full flex-col items-center justify-center text-gray-400">
             <MessageSquare size={40} />
             <p>Select a conversation to view messages</p>
           </div>

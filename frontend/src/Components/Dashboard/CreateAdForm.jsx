@@ -10,6 +10,7 @@ const CreateAdForm = ({
   uploading,
   form,
   preview,
+  categoryOptions,
   subcategories,
   showDelivery,
   showSalary,
@@ -376,7 +377,7 @@ const CreateAdForm = ({
                     name="category"
                     value={form.category || ""}
                     onChange={handleChange}
-                    options={Object.keys(subcategories)}
+                    options={categoryOptions || []}
                   />
 
                   <Select

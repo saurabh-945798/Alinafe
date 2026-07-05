@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import {
   Mail,
   Phone,
-  MapPin,
   MessageSquare,
 } from "lucide-react";
 import axios from "axios";
@@ -81,7 +80,7 @@ const Contact = () => {
 
       {/* ================= CONTACT INFO ================= */}
       <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+        <div className="grid gap-8 mb-16 sm:grid-cols-2">
           {/* Email */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -111,24 +110,6 @@ const Contact = () => {
             <h3 className="font-semibold text-lg mb-2">Phone</h3>
             <p className="text-gray-600 text-sm">
           +91 8920679937
-            </p>
-          </motion.div>
-
-          {/* Address */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="bg-white rounded-2xl shadow-md p-8 text-center"
-          >
-            <div className="w-14 h-14 mx-auto flex items-center justify-center rounded-full bg-[#14B8A6]/10 text-[#0F766E] mb-4">
-              <MapPin size={26} />
-            </div>
-            <h3 className="font-semibold text-lg mb-2">Office Address</h3>
-            <p className="text-gray-600 text-sm">
-              A 502, Shipra Krishna Vista,<br />
-              Ahinsa Khand, Indirapuram, Ghaziabad<br />
-              PIN: 201010
             </p>
           </motion.div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Sidebar from "../../Components/Sidebar/Sidebar.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import api from "../../api/axios";
@@ -18,6 +18,8 @@ const CreateAd = () => {
   // 🎥 VIDEO STATE
   const [videoFile, setVideoFile] = useState(null);
   const [videoPreview, setVideoPreview] = useState("");
+  const [categoryOptions, setCategoryOptions] = useState([]);
+  const [subcategories, setSubcategories] = useState({});
 
   const [form, setForm] = useState({
     title: "",
@@ -94,134 +96,31 @@ const CreateAd = () => {
 
   });
 
-  // ✅ Category list
-  const subcategories = {
-    Vehicles: [
-      "Cars",
-      "Motorcycles",
-      "Bikes",
-      "Scooters",
-      "Bicycles",
-      "Electric Bikes",
-      "Commercial Vehicles",
-      "Spare Parts",
-      "Vehicle Accessories",
-    ],
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await api.get("/categories");
+        const categories = res.data?.categories || [];
 
-    "Real Estate": [
-      "For Sale: Houses & Apartments",
-      "For Rent: Houses & Apartments",
-      "Lands & Plots",
-      "For Rent: Shops & Offices",
-      "For Sale: Shops & Offices",
-      "PG & Guest Houses",
-    ],
+        setCategoryOptions(categories.map((category) => category.name).filter(Boolean));
 
+        const subcategoryMap = categories.reduce((acc, category) => {
+          acc[category.name] = (category.subcategories || [])
+            .map((subcategory) => subcategory.name)
+            .filter(Boolean);
+          return acc;
+        }, {});
 
+        setSubcategories(subcategoryMap);
+      } catch (error) {
+        console.error("Failed to load public categories:", error);
+      }
+    };
 
-    Mobiles: [
-      "Mobile Phones",
-      "Accessories",
-      "Tablets",
+    fetchCategories();
+  }, []);
 
-    ],
-
-    Electronics: [
-      "Computers & Laptops",
-      "Computer Accessories",
-      "Gaming Consoles & Accessories",
-      "TVs & Home Entertainment",
-      "Cameras & Lenses",
-      "Smart Watches & Wearables",
-      "Speakers & Headphones",
-      "Kitchen Appliances",
-      "Home Appliances",
-      "Refrigerators",
-      "Washing Machines",
-      "ACs & Coolers",
-      "Printers, Monitors & Hard Disks",
-      "Smart Home Devices",
-    ],
-
-    Furniture: [
-      "Beds",
-      "Sofas",
-      "Office Chairs",
-      "Dining Tables",
-      "Wardrobes",
-      "Study Tables",
-      "Office Tables",
-      "TV Units",
-      "Coffee Tables",
-      "Storage Cabinets",
-    ],
-
-    Sports: [
-      "Cricket Equipment",
-      "Football Gear",
-      "Badminton & Tennis",
-      "Gym & Fitness Equipment",
-      "Cycling",
-      "Skating & Skateboards",
-      "Swimming Gear",
-      "Sportswear & Jerseys",
-      "Yoga & Meditation Items",
-      "Boxing & Martial Arts",
-      "Camping & Trekking Gear",
-      "Indoor Games (Chess, Carrom, etc.)",
-    ],
-
-    Fashion: ["Men", "Women", "Footwear", "Watches", "Bags"],
-
-    Books: [
-      "Books",
-      "Gym & Fitness",
-      "Musical Instruments",
-      "Sports Equipment",
-      "Other Hobbies",
-    ],
-
-    Pets: ["Dogs"],
-
-    Services: [
-      "Plumber",
-      "Electrician",
-      "Carpentry Services",
-      "AC Repair & Services",
-      "Refrigerator Repair",
-      "Washing Machine Repair",
-      "Painter",
-      "Home Cleaning",
-      "Pest Control",
-      "Packers & Movers",
-      "Driver Services",
-      "Computer & Laptop Repair",
-      "Mobile Repair",
-      "Tutoring & Classes",
-      "Fitness Trainer",
-      "Beauty & Salon Services",
-      "CCTV Installation & Repair",
-      "Interior Design & Renovation",
-      "Event & Wedding Services",
-      "Travel & Tour Services",
-    ],
-
-    Jobs: [
-      "Delivery Jobs",
-      "Driver Jobs",
-      "Data Entry Jobs",
-      "Office Assistant",
-      "Sales & Marketing",
-      "Retail / Store Staff",
-      "Hotel & Restaurant Jobs",
-      "Cook / Chef",
-      "Housekeeping",
-      "Telecaller / BPO",
-      "Teacher / Tutor",
-      "Accountant",
-    ],
-
-  };
+  const categoryList = useMemo(() => categoryOptions, [categoryOptions]);
 
   // ✅ Conditional displays
   // ✅ REAL WORLD CONDITIONS (FIXED)
@@ -582,6 +481,7 @@ const CreateAd = () => {
         uploading={uploading}
         form={form}
         preview={preview}
+        categoryOptions={categoryList}
         subcategories={subcategories}
         showDelivery={showDelivery}
         showSalary={showSalary}

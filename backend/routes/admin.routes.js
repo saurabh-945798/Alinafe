@@ -20,6 +20,17 @@ import {
 } from "../Controllers/adminController.js";
 
 import { getAdminStats } from "../Controllers/adminOverview.controller.js";
+import {
+  addSubcategory,
+  createCategory,
+  deleteCategory,
+  deleteSubcategory,
+  getAdminCategories,
+  updateCategory,
+  updateCategoryStatus,
+  updateSubcategory,
+  updateSubcategoryStatus,
+} from "../Controllers/categoryAdminController.js";
 
 const router = express.Router();
 
@@ -48,5 +59,27 @@ router.put(
 router.patch("/ads/:id/approve", authMiddleware, approveAd);
 router.patch("/ads/:id/reject", authMiddleware, rejectAd);
 router.delete("/ads/:id", authMiddleware, deleteAdByAdmin);
+
+router.get("/categories", authMiddleware, getAdminCategories);
+router.post("/categories", authMiddleware, createCategory);
+router.put("/categories/:id", authMiddleware, updateCategory);
+router.patch("/categories/:id/status", authMiddleware, updateCategoryStatus);
+router.delete("/categories/:id", authMiddleware, deleteCategory);
+router.post("/categories/:id/subcategories", authMiddleware, addSubcategory);
+router.put(
+  "/categories/:id/subcategories/:subcategoryId",
+  authMiddleware,
+  updateSubcategory
+);
+router.patch(
+  "/categories/:id/subcategories/:subcategoryId/status",
+  authMiddleware,
+  updateSubcategoryStatus
+);
+router.delete(
+  "/categories/:id/subcategories/:subcategoryId",
+  authMiddleware,
+  deleteSubcategory
+);
 
 export default router;

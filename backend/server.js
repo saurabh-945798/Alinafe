@@ -34,6 +34,7 @@ import contactRoutes from "./routes/contactRoutes.js";
 import emailRoutes from "./routes/email.routes.js";
 import phoneAuthRoutes from "./routes/phoneAuth.routes.js";
 import ogPreviewRoutes from "./routes/ogPreview.routes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
 import { getDiskFreeSpace } from "./utils/diskUtils.js";
 
 
@@ -184,6 +185,7 @@ app.use("/api/trending", trendingRoutes);
 app.use("/api/public/sellers", publicSellerRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/categories", categoryRoutes);
 
 app.use("/api/email", emailRoutes);
 app.use("/api/auth/phone", phoneAuthRoutes);

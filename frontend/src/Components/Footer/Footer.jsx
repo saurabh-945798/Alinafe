@@ -171,14 +171,14 @@ const Footer = () => {
               Contact Us
             </h3>
             <ul className="space-y-3 text-gray-600 text-sm">
-              <li className="flex items-start gap-3">
+              {/* <li className="flex items-start gap-3">
                 <MapPin size={16} className="text-[#14B8A6] mt-0.5" />
                 <span>
                   A 502, Shipra Krishna Vista,
                   <br />
                   Ahinsa Khand, Indirapuram, Ghaziabad
                 </span>
-              </li>
+              </li> */}
               <li className="flex items-center gap-3">
                 <Mail size={16} className="text-[#14B8A6]" />
                 support@alinafe.in

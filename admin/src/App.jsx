@@ -22,6 +22,7 @@ import CategoryInsight from "./Components/Dashboard/CategoryInsight";
 import UserGrowth from "./Components/Dashboard/UserGrowth";
 import AdminSettings from "./Components/Dashboard/AdminSettings";
 import AdminContactInbox from "./Components/Dashboard/AdminContactInbox";
+import Categories from "./Components/Dashboard/Categories";
 
 /* 🔹 ADMIN LAYOUT */
 const AdminLayout = () => {
@@ -35,6 +36,7 @@ const AdminLayout = () => {
           <Route index element={<Dashboard />} />
 
           <Route path="users" element={<Users />} />
+          <Route path="categories" element={<Categories />} />
           <Route path="ads" element={<AllAds />} />
           <Route path="messages" element={<Messages />} />
           <Route path="contact-inbox" element={<AdminContactInbox />} />

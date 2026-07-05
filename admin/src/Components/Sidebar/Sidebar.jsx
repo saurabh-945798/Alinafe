@@ -95,6 +95,11 @@ const AdminSidebar = () => {
     },
 
     { name: "Users", icon: <Users size={20} />, path: "/admin/users" },
+    {
+      name: "Categories",
+      icon: <FolderOpen size={20} />,
+      path: "/admin/categories",
+    },
     { name: "Ads", icon: <FolderOpen size={20} />, path: "/admin/ads" },
     {
       name: "Reports",
